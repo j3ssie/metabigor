@@ -9,22 +9,22 @@
 </p>
 
 ## What is Metabigor?
-Metabigor allows you do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, etc) without any API key.
+Metabigor allows you to do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, etc) without any API key.
 
 ## But Why Metabigor?
-* Don't use your API key so you don't have to worry about litmit of API quotation.**\***
+* Don't use your API key so you don't have to worry about litmit of API quotation.
 
-* Do query from command line without Premium account.**\***
+* Do query from command line without Premium account.
 
-* Get more result without Premium account. **\***
+* Get more results without Premium account. 
 
 * But I have an Premium account why do I need this shit? 
     * Again Metabigor will not lose your API quotation.
-    * Your query will optimized so you gonna get more result than using it by hand or API key.
-    * Never get duplicate result.**\***
+    * Your query will optimized so you gonna get more results than using it by hand or API key.
+    * Never get duplicate result.
 
 ## How it works?
-Metabigor gonna use your cookie or not to simulate search from browser and optimize the query to get more result.
+Metabigor gonna use your cookie or not to simulate search from browser and your query will be optimized to get more results.
 
 ## Search Engine currently supported
 - [x] Shodan.
@@ -107,7 +107,7 @@ Do command below or direct modify config.conf file
 
 
 ### TODO
-* Predine query to do specific task like subdomain scan, portscan 
+* Predine query to do specific task like subdomain scan, portscan.
 * Adding more search engine.
   * ZoomEye
   * Baidu
