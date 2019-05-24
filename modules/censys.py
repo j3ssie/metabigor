@@ -76,6 +76,10 @@ class Censys():
         r = sender.send_get(self.options, url, self.cookies)
         if r:
             response = r.text
+            if 'ratelimit' in response:
+                utils.print_bad('Looks like you get block from Censys. Consider using Proxy')
+                return False
+
             if self.options['store_content']:
                 ts = str(int(time.time()))
                 raw_file = self.options['raw'] + \
@@ -163,6 +167,11 @@ class Censys():
             r = sender.send_get(self.options, url, self.cookies)
             if r.status_code == 200:
                 response = r.text
+                if 'ratelimit' in response:
+                    utils.print_bad(
+                        'Looks like you get block from Censys. Consider using Proxy')
+                    return False
+                
                 if 'class="alert alert-danger"' in response:
                     utils.print_bad(
                         "Reach to the limit at page {0}".format(str(i)))

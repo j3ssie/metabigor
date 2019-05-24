@@ -38,6 +38,7 @@ cd Metabigor
 pip3 install -r requirements.txt
 ```
 
+
 ## Demo
 [![asciicast](https://asciinema.org/a/jaARv3sMSOVYQ1yOsjeKZp8Ek.svg)](https://asciinema.org/a/jaARv3sMSOVYQ1yOsjeKZp8Ek)
 
@@ -52,6 +53,7 @@ pip3 install -r requirements.txt
 Check out the [Advanced Usage](https://github.com/j3ssie/Metabigor/wiki/Advanced-Usage) to explore some awesome options
 
 ### Example commands
+__Note__: Fill your credentials or your sessions on `config.conf` if you wan't to get more results.
 
 ```
 ./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"' 

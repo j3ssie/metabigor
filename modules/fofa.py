@@ -95,9 +95,12 @@ class Fofa():
         # custom here
         divs = soup.find_all("div", "list_mod_t")
         for div in divs:
-            print(div.a.get('href'))
-            result.append(div.a.get('href'))
-        utils.just_write(self.output, "\n".join(result) + "\n" )
+            result = div.a.get('href')
+            # don't know why sometimes we get this false positive
+            if '/result?qbase64=' not in result:
+                print(result)
+                result.append(result)
+        utils.just_write(self.output, "\n".join(result) + "\n")
 
 
     # checking if there is many pages or not
