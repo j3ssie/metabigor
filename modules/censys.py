@@ -138,13 +138,16 @@ class Censys():
 
         for tag in summary_tag:
             if 'Page:' in tag.text:
-                page_num = tag.text.split('Page: ')[1].split('/')[1]
+                page_num = tag.text.split('Page: ')[1].split(
+                    '/')[1].replace(',', '')
 
             if 'Results:' in tag.text:
-                results_total = tag.text.split('Results: ')[1].replace(',','')
+                # print(tag.text)
+                results_total = tag.text.split('Results: ')[1].replace(',', '')
+                utils.print_debug(self.options, results_total)
 
         utils.print_good("Detect posible {0} pages per {1} result".format(
-            page_num, results_total))
+            page_num.strip(), results_total.strip()))
         return page_num
 
     # keep doing if there have many pages
@@ -255,8 +258,8 @@ class Censys():
 
             if r1.status_code == 302:
                 for item in r1.cookies.items():
-                    if item.get('auth_tkt'):
-                        censys_cookies = item.get('auth_tkt')
+                    if item[1]:
+                        censys_cookies = item[1]
                         utils.set_session(
                             self.options, censys_cookies, source='censys')
                         return censys_cookies
