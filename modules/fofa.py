@@ -96,10 +96,13 @@ class Fofa():
         divs = soup.find_all("div", "list_mod_t")
         for div in divs:
             real_data = div.a.get('href')
-            # don't know why sometimes we get this false positive
-            if '/result?qbase64=' not in real_data:
+            # some query do not have URL so parse this div class=ip-no-url
+            if '/result?qbase64=' in real_data:
+                real_data = div.div.text.strip()
                 print(real_data)
+            else:
                 result.append(real_data)
+
         utils.just_write(self.output, "\n".join(result) + "\n")
 
 

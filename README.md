@@ -12,16 +12,16 @@
 Metabigor allows you do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, etc) without any API key.
 
 ## But Why Metabigor?
-* Don't use your API key so you don't have to worry about litmit of API quotation.**\***
+* Don't use your API key so you don't have to worry about litmit of API quotation.
 
-* Do query from command line without Premium account.**\***
+* Do query from command line without Premium account.
 
-* Get more result without Premium account. **\***
+* Get more result without Premium account. 
 
 * But I have an Premium account why do I need this shit? 
     * Again Metabigor will not lose your API quotation.
     * Your query will optimized so you gonna get more result than using it by hand or API key.
-    * Never get duplicate result.**\***
+    * Never get duplicate result.
 
 ## How it works?
 Metabigor gonna use your cookie or not to simulate search from browser and optimize the query to get more result.
@@ -53,7 +53,7 @@ pip3 install -r requirements.txt
 Check out the [Advanced Usage](https://github.com/j3ssie/Metabigor/wiki/Advanced-Usage) to explore some awesome options
 
 ### Example commands
-__Note__: Fill your credentials or your sessions on `config.conf` if you wan't to get more results.
+__Note__: Fill your credentials or your sessions on `config.conf` if you want to get more results.
 
 ```
 ./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"' 

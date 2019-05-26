@@ -125,12 +125,12 @@ class Shodan():
 
         output = []
         for item in result:
-            if item.get('external_url'):
+            if item.get('external_url') and item.get('external_url') != 'N/A':
                 output.append(item.get('external_url'))
-            elif item.get('raw_ip'):
-                output.append(item.get('raw_ip'))
-            elif item.get('result_title'):
+            elif item.get('result_title') and item.get('result_title') != 'N/A':
                 output.append(item.get('result_title'))
+            elif item.get('raw_ip') and item.get('raw_ip') != 'N/A':
+                output.append(item.get('raw_ip'))
 
         really_data = "\n".join(output)
         print(really_data)
