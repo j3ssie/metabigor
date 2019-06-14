@@ -101,6 +101,7 @@ class Fofa():
                 real_data = div.div.text.strip()
                 print(real_data)
             else:
+                print(real_data)
                 result.append(real_data)
 
         utils.just_write(self.output, "\n".join(result) + "\n")

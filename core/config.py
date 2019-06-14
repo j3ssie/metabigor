@@ -135,7 +135,10 @@ def config(options, args):
     if args.outdir:
         options['outdir'] = args.outdir
 
+    options['module'] = args.module if args.module else None
+    options['target'] = args.target if args.target else None
     options['debug'] = args.debug if args.debug else None
+    options['relatively'] = args.relatively if args.relatively else False
     options['brute'] = args.brute if args.brute else None
     options['disable_pages'] = args.disable_pages if args.disable_pages else None
     options['store_content'] = args.store_content if args.store_content else None
@@ -211,7 +214,7 @@ def banner(__author__, __version__):
                       @#   +@@@@@@@@`   #@`
                       '@#. `+@@@@#;@@+;@@+ 
                        '@@@@@#     .@@@@'  
-                         ;@+`'''.format(GR,G))
+                         ;@+`'''.format(GR, G))
                          
     print('''            
                   Metabigor {2}{0}{3} {4}by {2}{1}{4}
@@ -230,11 +233,14 @@ Do command below or direct modify config.conf file
 ./metabigor.py -s shodan --cookies=<content of polito cookie>
 ./metabigor.py -s censys --cookies=<content of auth_tkt cookie>
 ./metabigor.py -s fofa --cookies=<content of _fofapro_ars_session cookie>
+./metabigor.py -s zoomeye --cookies=<content of Cube-Authorization header>
 
 
 {2}[*]{0} Basic Usage{1}
 ===============
 ./metabigor.py -s <source> -q '<your_query>' [options]
+./metabigor.py -S <json file of multi source> [options]
+./metabigor.py -m <module> -t <target> [options]
 
 {2}[*]{0} More Options{1}
 ===============
@@ -248,6 +254,7 @@ Do command below or direct modify config.conf file
   -b                    Auto brute force the country code
   --disable_pages       Don't loop though the pages
   --store_content       Store the raw HTML souce or not
+  -M                    Print available module and search engine supported
   --hh                  Print this message
   --debug               Print debug output
 
@@ -255,8 +262,37 @@ Do command below or direct modify config.conf file
 {2}[*]{0} Example commands{1}
 ===============
 ./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"'
+./metabigor.py -s zoomeye -q 'app:"tomcat"'
 ./metabigor.py -s shodan -q 'port:"3389" os:"Windows"' --debug 
 ./metabigor.py -s shodan -Q list_of_query.txt --debug -o rdp.txt  -b --disable_pages
+./metabigor.py -s censys -q '(scada) AND protocols: "502/modbus"' -o something  --debug --proxy socks4://127.0.0.1:9050
+
+./metabigor.py -m exploit -t 'nginx|1.0'  --debug
+
+            '''.format(G, GR, B))
+    sys.exit(0)
+
+
+def modules_help():
+    utils.print_info(
+        "Visit this page for complete usage: https://github.com/j3ssie/Metabigor/wiki")
+    print('''{1}
+{2}[*]{0} Available modules{1}
+===============
+  custom         Do query from specific search engine (default mode)
+  exploit        Do query from multiple source to get CVE or exploit about app of software
+
+{2}[*]{0} Usage{1}
+===============
+./metabigor.py -m exploit -t '<app>|version' [options]
+./metabigor.py -m custom -q '<query>'
+
+{2}[*]{0} Example commands{1}
+===============
+./metabigor.py -m custom -s shodan -Q list_of_query.txt --debug -o rdp.txt  -b --disable_pages
+
+./metabigor.py -m exploit -t 'nginx|1.0'  --debug
+./metabigor.py -m exploit -t 'tomcat|7' -d /tmp/ -o tomcat --debug
 
             '''.format(G, GR, B))
     sys.exit(0)

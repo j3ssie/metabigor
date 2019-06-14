@@ -12,20 +12,24 @@ try:
 except:
     pass
 
-from configparser import ConfigParser, ExtendedInterpolation
-
 from . import config
 from . import utils
 
 
-##### Sending stuff
+'''
+ Sending stuff
+'''
+
 normal_headers = {"User-Agent": "Mozilla/5.0 (X11; FreeBSD amd64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.5", "Accept-Encoding": "gzip, deflate", "Connection": "close"}
 
 post_headers = {"User-Agent": "Mozilla/5.0 (X11; FreeBSD amd64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.5",
                 "Accept-Encoding": "gzip, deflate", "Content-Type": "application/x-www-form-urlencoded", "Connection": "close", "Upgrade-Insecure-Requests": "1"}
 
+json_headers = {"User-Agent": "Mozilla/5.0 (X11; FreeBSD amd64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36",
+                "Accept": "application/json", "Accept-Language": "en-US,en;q=0.5", "Accept-Encoding": "gzip, deflate", "Content-Type": "application/json"}
 
-def send_get(options, url, cookies, headers=normal_headers):
+
+def send_get(options, url, cookies=None, headers=normal_headers):
     utils.print_debug(options, url)
     if options.get('proxy'):
         r = requests.get(url, verify=False, headers=headers,
@@ -36,17 +40,41 @@ def send_get(options, url, cookies, headers=normal_headers):
     return r
 
 
-def send_post(options, url, cookies, data, headers=post_headers, follow=True):
+def send_post(options, url, data, cookies=None, is_json=False, headers=normal_headers, retry=3):
+    r = just_post(options, url, data, cookies, is_json, headers=headers)
+    utils.print_debug(options, r.status_code)
+    if r.status_code >= 500:
+        if retry:
+            count = 0
+            while count < retry:
+                utils.random_sleep(3, 6)
+                utils.print_debug(options, "Retry the request")
+                r = just_post(options, url, data, cookies,
+                              is_json, headers=headers)
+                if r.status_code == 200:
+                    return r
+                count += 1
+    return r
+
+
+def just_post(options, url, data, cookies=None, is_json=False, headers=normal_headers):
     utils.print_debug(options, url)
     utils.print_debug(options, data)
-
     if options.get('proxy'):
-        r = requests.post(url, allow_redirects=follow, verify=False,
-                          headers=headers, cookies=cookies, data=data, proxies=options.get('proxy'))
-        
+        if is_json:
+            r = requests.post(url, verify=False,
+                              headers=json_headers, cookies=cookies, json=data, proxies=options.get('proxy'))
+        else:
+            r = requests.post(url, verify=False, headers=headers,
+                              cookies=cookies, proxies=options.get('proxy'))
+
     else:
-        r = requests.post(url, allow_redirects=follow, verify=False, headers=headers,
-                          cookies=cookies, data=data)
+        if is_json:
+            r = requests.post(url, verify=False,
+                              headers=json_headers, cookies=cookies, json=data)
+        else:
+            r = requests.post(url, verify=False,
+                              headers=headers, cookies=cookies)
 
     return r
 

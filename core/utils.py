@@ -1,5 +1,6 @@
 import os 
 import re 
+import json
 import base64 
 import random
 import time
@@ -33,8 +34,6 @@ full_country_code = ['AF', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR',
  Beatiful print
 '''
 
-
-
 def print_debug(options, text):
     if options['debug']:
         print(debug, text)
@@ -61,7 +60,8 @@ def print_bad(text):
 
 
 def check_output(output):
-    print('{1}--==[ Check the output: {2}{0}'.format(output, G, P))
+    abs_path = os.path.abspath(output)
+    print('{1}--==[ Check the output: {2}{0}'.format(abs_path, G, P))
 
 
 '''
@@ -77,6 +77,9 @@ def random_sleep(min=2, max=5):
 def soup(html):
     soup = BeautifulSoup(html, "lxml")
     return soup
+
+def get_json(text):
+    return json.loads(text)
 
 
 def get_query(url):
@@ -96,7 +99,6 @@ def get_country_code(query, source='shodan'):
         elif source == 'censys':
             m = re.search(
                 '(country\_code:.[a-zA-Z]+)|(country:.([\"]?)[a-zA-Z]+.[a-zA-Z]+([\"]?))', query)
-            
             country_code = m.group()
 
         return country_code
@@ -115,6 +117,15 @@ def get_city_name(query, source='shodan'):
         country_code = m.group().split('=')[1].strip('"')
 
     return city_code
+
+# get cve number
+def get_cve(source):
+    m = re.search('CVE-\d{4}-\d{4,7}', source)
+    if m:
+        cve = m.group()
+        return cve
+    else:
+        return 'N/A'
 
 
 def url_encode(string_in):
@@ -190,16 +201,18 @@ def just_read(filename):
 
     return False
 
-def just_write(filename, data, verbose=False):
+
+def just_write(filename, data, is_json=False, verbose=False):
     real_path = os.path.normpath(filename)
     try:
-        if verbose:
-            print_good("Writing {0}".format(real_path))
-        with open(real_path, 'a+') as f:
-            f.write(data)
+        print_good("Writing {0}".format(filename)) if verbose else None
+        if is_json:
+            with open(real_path, 'a+') as f:
+                json.dump(data, f)
+        else:
+            with open(real_path, 'a+') as f:
+                f.write(data)
     except:
-        if verbose:
-            print_good("Writing {0}".format(real_path))
         print_bad("Writing fail: {0}".format(real_path))
         return False
 
@@ -210,7 +223,7 @@ def just_cleanup(filename):
     if os.path.isfile(filename):
         with open(filename, 'r') as f:
             raw = f.read().splitlines()
-        
+
         data = [x for x in raw if str(x) != '']
 
         with open(filename, 'w+') as o:

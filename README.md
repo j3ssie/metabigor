@@ -5,13 +5,14 @@
     <a href="https://github.com/j3ssie/Metabigor"><img alt="python" src="https://img.shields.io/badge/python-3.6%2B-blue.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
     <a href=""><img alt="tested" src="https://img.shields.io/badge/tested-Linux%2fOSX-red.svg"></a>
+    <a href="https://www.youtube.com/watch?v=O-KKke5fCkc"><img alt="Demo" src="https://img.shields.io/badge/demo-youtube-blue.svg"></a>
   </p>
 </p>
 
 ## What is Metabigor?
-Metabigor allows you do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, etc) without any API key.
+Metabigor allows you to do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, ZoomEye, etc) without any API key.
 
-## But Why Metabigor?
+## But Why Metabigor?\*
 * Don't use your API key so you don't have to worry about litmit of API quotation.
 
 * Do query from command line without Premium account.
@@ -23,13 +24,15 @@ Metabigor allows you do query from command line to awesome Search Engines (like 
     * Your query will optimized so you gonna get more result than using it by hand or API key.
     * Never get duplicate result.
 
+
 ## How it works?
-Metabigor gonna use your cookie or not to simulate search from browser and optimize the query to get more result.
+Metabigor gonna use your cookie or not to simulate search from browser and automatic optimize the query to get more result.
 
 ## Search Engine currently supported
 - [x] Shodan.
-- [x] Censys.
 - [x] Fofa Pro.
+- [x] ZoomEye.
+- [x] Censys.
 
 ## Installation
 ```
@@ -75,11 +78,14 @@ Do command below or direct modify config.conf file
 ./metabigor.py -s shodan --cookies=<content of polito cookie>
 ./metabigor.py -s censys --cookies=<content of auth_tkt cookie>
 ./metabigor.py -s fofa --cookies=<content of _fofapro_ars_session cookie>
+./metabigor.py -s zoomeye --cookies=<content of Cube-Authorization header>
 
 
 [*] Basic Usage
 ===============
 ./metabigor.py -s <source> -q '<your_query>' [options]
+./metabigor.py -S <json file of multi source> [options]
+./metabigor.py -m <module> -t <target> [options]
 
 [*] More Options
 ===============
@@ -93,28 +99,33 @@ Do command below or direct modify config.conf file
   -b                    Auto brute force the country code
   --disable_pages       Don't loop though the pages
   --store_content       Store the raw HTML souce or not
+  -M                    Print available module and search engine supported
   --hh                  Print this message
   --debug               Print debug output
 
 
 [*] Example commands
 ===============
-./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"' -b
-./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"' -b --disable_pages
+./metabigor.py -s fofa -q 'title="Dashboard - Confluence" && body=".org"'
+./metabigor.py -s zoomeye -q 'app:"tomcat"'
 
 ./metabigor.py -s shodan -q 'port:"3389" os:"Windows"' --debug
-./metabigor.py -s shodan -Q list_of_query.txt --debug -o rdp.txt
+./metabigor.py -s shodan -Q list_of_query.txt --debug -o rdp.txt  -b --disable_pages
 
 ./metabigor.py -s censys -q '(scada) AND protocols: "502/modbus"' -o something  --debug --proxy socks4://127.0.0.1:9050
+
+./metabigor.py -m exploit -t 'nginx|1.0'  --debug
 
 ```
 
 
-### TODO
-* Predine query to do specific task like subdomain scan, portscan 
+### Todo
+* Auto switch to query using proxy if get blocked.
+* Predine query to do specific task like subdomain scan, portscan.
 * Adding more search engine.
-  * ZoomEye
+  * ~~ZoomEye~~
   * Baidu
+  * Get free proxy from multiple data sources
 
 
 ## Credits
@@ -122,7 +133,11 @@ Do command below or direct modify config.conf file
 Logo from [flaticon](https://www.flaticon.com/free-icon/metabolism_1774457) by [Vitaly Gorbachev
 ](https://www.flaticon.com/authors/vitaly-gorbachev) and ascii logo converted by [picascii](http://picascii.com/)
 
+
 ## Disclaimer
+
+> \* Note: Some features above might not works for all Search Engine. <br />
+E.g: Some Search Engines allowed use API key without Premium account and and some of them lose your quotation quotation even when you do not use API key.
 
 This tool is for educational purposes only. You are responsible for your own actions. If you mess something up or break any laws while using this software, it's your fault, and your fault only.
 
