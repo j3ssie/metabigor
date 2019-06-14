@@ -41,8 +41,9 @@ class ZoomEye():
         r = sender.send_get(self.options, sess_url, headers=self.headers)
 
         if not r or 'login required' in r.text:
-            utils.print_bad(
-                "Look like ZoomEye session is invalid.")
+            utils.print_bad("Look like ZoomEye session is invalid.")
+            # delete jwt header to prevent getting 401 code
+            del self.headers['Cube-Authorization']
             return False
         elif 'uuid' in r.text or 'nickname' in r.text:
             utils.print_good("Getting result as authenticated user")
@@ -60,9 +61,9 @@ class ZoomEye():
     # really sending request and looping through the page
     def sending(self, url):
         # sending request and return the response
-        r = sender.send_get(self.options, url, headers=self.headers)
-        if r:
-            response = r.text
+        r1 = sender.send_get(self.options, url, headers=self.headers)
+        if r1:
+            response = r1.text
 
             if self.options['store_content']:
                 ts = str(int(time.time()))
@@ -76,7 +77,7 @@ class ZoomEye():
 
             # loop throuh pages if you're logged in
             page_num = self.get_num_pages(json_response)
-            if self.logged_in and int(page_num) > 1:
+            if self.logged_in and page_num and int(page_num) > 1:
                 self.pages(page_num)
 
             # get aggs and found more result
@@ -88,7 +89,6 @@ class ZoomEye():
         # custom here
         items = json_response.get('matches')
         if not items:
-            utils.print_bad("Look like we reach limit result")
             return False
 
         for item in items:
@@ -119,6 +119,11 @@ class ZoomEye():
 
     # get number of page
     def get_num_pages(self, json_response):
+        # check if query have result
+        if not json_response.get('total'):
+            utils.print_bad("Look like your query have no results")
+            return False
+        
         results_total = int(json_response.get('total'))
         pageSize = int(json_response.get('pageSize'))
         page_num = str(int(results_total / pageSize))
@@ -142,8 +147,7 @@ class ZoomEye():
             if r.status_code == 200:
                 response = r.text
                 if '"msg": "forbidden"' in response:
-                    utils.print_bad(
-                        "Reach to the limit at page {0}".format(str(i)))
+                    utils.print_bad("Reach to the limit at page {0}".format(str(i)))
                     return
                 else:
                     json_response = utils.get_json(response)
@@ -169,6 +173,7 @@ class ZoomEye():
 
         raw_query = self.options['zoomeye_query']
         clean_query = self.options['zoomeye_query']
+
         if 'country' in raw_query:
             country_code = utils.get_country_code(utils.url_decode(raw_query))
             # clean country and subdivisions if it exist
@@ -180,9 +185,12 @@ class ZoomEye():
                 country_item.get('name')))
             # loop through city
             for city in country_item.get('subdivisions'):
-                real_query = clean_query + \
-                    ' +country:"{0}"'.format(country_item.get('name')) + \
-                    ' +subdivisions:"{0}"'.format(city.get('name'))
+                if 'country' in raw_query:
+                    real_query = raw_query + ' +subdivisions:"{0}"'.format(city.get('name'))
+                else:
+                    real_query = clean_query + \
+                        ' +country:"{0}"'.format(country_item.get('name')) + \
+                        ' +subdivisions:"{0}"'.format(city.get('name'))
 
                 query = utils.url_encode(real_query)
 
