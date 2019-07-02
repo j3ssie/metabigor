@@ -1,6 +1,6 @@
 <p align="center">
   <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/1774/1774457.svg" height="140" />
-  <p align="center">Command line Search Engines Framework but without API key</p>
+  <p align="center">Command line Search Engine without any API key</p>
   <p align="center">
     <a href="https://github.com/j3ssie/Metabigor"><img alt="python" src="https://img.shields.io/badge/python-3.6%2B-blue.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
@@ -41,6 +41,7 @@ cd Metabigor
 pip3 install -r requirements.txt
 ```
 
+
 ## Demo
 [![asciicast](https://asciinema.org/a/jaARv3sMSOVYQ1yOsjeKZp8Ek.svg)](https://asciinema.org/a/jaARv3sMSOVYQ1yOsjeKZp8Ek)
 
@@ -52,7 +53,7 @@ pip3 install -r requirements.txt
 ./metabigor.py -s <source> -q '<your_query>' [options]
 ```
 
-Check out the [Advanced Usage](https://github.com/j3ssie/Metabigor/wiki) to explore some awesome options
+Check out the [Advanced Usage](https://github.com/j3ssie/Metabigor/wiki/Advanced-Usage) to explore some awesome options
 
 ### Example commands
 __Note__: Fill your credentials or your sessions on `config.conf` if you want to get more results.
@@ -125,11 +126,6 @@ Do command below or direct modify config.conf file
   * ~~ZoomEye~~
   * Baidu
   * Get free proxy from multiple data sources
-
-
-### Contribute
-
-If you have some new idea about this project or you have found some valuable tool feel free to open an issue for just DM me via [@j3ssiejjj](https://twitter.com/j3ssiejjj).
 
 
 ## Credits

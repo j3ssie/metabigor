@@ -81,8 +81,8 @@ def source_parsing(options):
             targets = utils.just_read(options.get('target_list')).splitlines()
 
             for query in targets:
-                options['query'] = query
-                single_query(options)
+                options['target'] = query
+                module_query(options)
         else:
             module_query(options)
 
