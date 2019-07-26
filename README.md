@@ -13,7 +13,7 @@
 Metabigor allows you to do query from command line to awesome Search Engines (like Shodan, Censys, Fofa, ZoomEye, etc) without any API key.
 
 ## But Why Metabigor?\*
-* Don't use your API key so you don't have to worry about litmit of API quotation.
+* Don't use your API key so you don't have to worry about limit of API quotation.
 
 * Do query from command line without Premium account.
 
@@ -98,7 +98,7 @@ Do command below or direct modify config.conf file
                         http://127.0.0.1:8080
   -b                    Auto brute force the country code
   --disable_pages       Don't loop though the pages
-  --store_content       Store the raw HTML souce or not
+  --store_content       Store the raw HTML source or not
   -M                    Print available module and search engine supported
   --hh                  Print this message
   --debug               Print debug output
