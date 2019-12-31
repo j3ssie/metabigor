@@ -1,0 +1,4 @@
+.DS_STORE
+.goreleaser.yml
+dist
+out*
