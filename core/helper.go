@@ -258,3 +258,10 @@ func StartWithNum(raw string) bool {
 	}
 	return r.MatchString(raw)
 }
+
+// StripPath just strip some invalid string path
+func StripPath(raw string) string {
+	raw = strings.Replace(raw, "/", "_", -1)
+	raw = strings.Replace(raw, " ", "_", -1)
+	return raw
+}

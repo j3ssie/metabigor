@@ -20,9 +20,9 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 
 	massOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(os.TempDir(), "mass-*")
+	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*")
 	if massOutput != "" {
-		tmpFile, _ = ioutil.TempFile(massOutput, "mass-*")
+		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*", core.StripPath(input)))
 	}
 	massOutput = tmpFile.Name()
 
@@ -73,7 +73,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	nmapOutput := options.Scan.TmpOutput
 	tmpFile, _ := ioutil.TempFile(os.TempDir(), "nmap-*")
 	if nmapOutput != "" {
-		tmpFile, _ = ioutil.TempFile(nmapOutput, "nmap-*")
+		tmpFile, _ = ioutil.TempFile(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
 	}
 	nmapOutput = tmpFile.Name()
 	nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 -oA %v", ports, input, nmapOutput)
