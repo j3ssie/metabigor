@@ -16,8 +16,10 @@ var log = logrus.New()
 func InitLog(options Options) {
 	log.SetOutput(os.Stderr)
 	if options.Debug == true {
+		log.SetOutput(os.Stdout)
 		log.SetLevel(logrus.DebugLevel)
 	} else if options.Verbose == true {
+		log.SetOutput(os.Stdout)
 		log.SetLevel(logrus.InfoLevel)
 	} else {
 		log.SetOutput(ioutil.Discard)

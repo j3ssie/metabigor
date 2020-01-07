@@ -14,7 +14,7 @@ Metabigor is Intelligence Framework, its goal is to do OSINT tasks and more but 
 ## Installation
 
 ```
-go get -u https://github.com/j3ssie/metabigor
+go get -u github.com/j3ssie/metabigor
 ```
 
 
