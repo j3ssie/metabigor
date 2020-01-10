@@ -80,10 +80,4 @@ func initConfig() {
 			options.Input = core.GetFileContent(options.Input)
 		}
 	}
-
-	if options.Input == "-" || options.Input == "" {
-		core.ErrorF("No input found")
-		os.Exit(1)
-	}
-
 }

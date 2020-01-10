@@ -2,8 +2,10 @@ package core
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
+	"path"
 
 	// "github.com/Sirupsen/logrus"
 	"github.com/fatih/color"
@@ -14,16 +16,33 @@ var log = logrus.New()
 
 // InitLog init log
 func InitLog(options Options) {
-	log.SetOutput(os.Stderr)
+	logDir := options.Scan.TmpOutput
+	if logDir == "" {
+		logDir = os.TempDir()
+	}
+	if !FolderExists(logDir) {
+		os.MkdirAll(logDir, 0755)
+	}
+	logFile := path.Join(logDir, "metabigor.log")
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	// defer f.Close()
+	mwr := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(mwr)
+
 	if options.Debug == true {
-		log.SetOutput(os.Stdout)
+		log.SetOutput(mwr)
 		log.SetLevel(logrus.DebugLevel)
 	} else if options.Verbose == true {
-		log.SetOutput(os.Stdout)
+		log.SetOutput(mwr)
 		log.SetLevel(logrus.InfoLevel)
 	} else {
 		log.SetOutput(ioutil.Discard)
 	}
+	log.Info(fmt.Sprintf("Store log file to: %v", logFile))
 }
 
 // GoodF print good message

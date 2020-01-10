@@ -20,9 +20,9 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 
 	massOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*")
+	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*.xml")
 	if massOutput != "" {
-		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*", core.StripPath(input)))
+		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*.xml", core.StripPath(input)))
 	}
 	massOutput = tmpFile.Name()
 

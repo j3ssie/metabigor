@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -31,6 +32,11 @@ func runNet(cmd *cobra.Command, args []string) error {
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
 	var inputs []string
+
+	if options.Input == "-" || options.Input == "" {
+		core.ErrorF("No input found")
+		os.Exit(1)
+	}
 
 	if strings.Contains(options.Input, "\n") {
 		inputs = strings.Split(options.Input, "\n")
