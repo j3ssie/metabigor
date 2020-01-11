@@ -25,3 +25,12 @@ func TestParsingNmap(t *testing.T) {
 		t.Errorf("Error RunMasscan")
 	}
 }
+
+func TestParseMassScan(t *testing.T) {
+	raw := core.GetFileContent("/tmp/ddemo")
+	result := ParsingMasscan(raw)
+	fmt.Println(result)
+	if len(result) == 0 {
+		t.Errorf("Error ParsingMasscan")
+	}
+}

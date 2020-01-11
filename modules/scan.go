@@ -20,13 +20,13 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 
 	massOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*.xml")
+	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*.txt")
 	if massOutput != "" {
-		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*.xml", core.StripPath(input)))
+		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*.txt", core.StripPath(input)))
 	}
 	massOutput = tmpFile.Name()
 
-	masscanCmd := fmt.Sprintf("sudo masscan --rate %v -p %v -oX %v %v", rate, ports, massOutput, input)
+	masscanCmd := fmt.Sprintf("sudo masscan --rate %v -p %v -oG %v %v", rate, ports, massOutput, input)
 	core.DebugF("Execute: %v", masscanCmd)
 	command := []string{
 		"bash",
@@ -104,6 +104,24 @@ func RunNmap(input string, ports string, options core.Options) []string {
 
 // ParsingMasscan parse result from masscan XML format
 func ParsingMasscan(raw string) map[string][]string {
+	result := make(map[string][]string)
+	data := strings.Split(raw, "\n")
+
+	for _, line := range data {
+		if !strings.Contains(line, "Host: ") {
+			continue
+		}
+		rawResult := strings.Split(line, " ")
+		ip := rawResult[1]
+		port := strings.Split(rawResult[len(rawResult)-1], "/")[0]
+		result[ip] = append(result[ip], port)
+	}
+
+	return result
+}
+
+// ParsingMasscanXML parse result from masscan XML format
+func ParsingMasscanXML(raw string) map[string][]string {
 	result := make(map[string][]string)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
 	if err != nil {

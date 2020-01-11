@@ -10,9 +10,10 @@ import (
 	// "github.com/Sirupsen/logrus"
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
+	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
-var log = logrus.New()
+var logger = logrus.New()
 
 // InitLog init log
 func InitLog(options Options) {
@@ -26,23 +27,33 @@ func InitLog(options Options) {
 	logFile := path.Join(logDir, "metabigor.log")
 	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		logger.Error("error opening file: %v", err)
 	}
 
 	// defer f.Close()
 	mwr := io.MultiWriter(os.Stdout, f)
-	log.SetOutput(mwr)
+
+	logger.SetLevel(logrus.InfoLevel)
+
+	logger = &logrus.Logger{
+		Out:   mwr,
+		Level: logrus.InfoLevel,
+		Formatter: &prefixed.TextFormatter{
+			ForceColors:     true,
+			ForceFormatting: true,
+		},
+	}
 
 	if options.Debug == true {
-		log.SetOutput(mwr)
-		log.SetLevel(logrus.DebugLevel)
+		logger.SetOutput(mwr)
+		logger.SetLevel(logrus.DebugLevel)
 	} else if options.Verbose == true {
-		log.SetOutput(mwr)
-		log.SetLevel(logrus.InfoLevel)
+		logger.SetOutput(mwr)
+		logger.SetLevel(logrus.InfoLevel)
 	} else {
-		log.SetOutput(ioutil.Discard)
+		logger.SetOutput(ioutil.Discard)
 	}
-	log.Info(fmt.Sprintf("Store log file to: %v", logFile))
+	logger.Info(fmt.Sprintf("Store log file to: %v", logFile))
 }
 
 // GoodF print good message
@@ -54,12 +65,12 @@ func GoodF(format string, args ...interface{}) {
 // BannerF print info message
 func BannerF(format string, data string) {
 	banner := color.BlueString("[*] %v", format)
-	log.Info(fmt.Sprintf("%v%v", banner, color.HiGreenString(data)))
+	logger.Info(fmt.Sprintf("%v%v", banner, color.HiGreenString(data)))
 }
 
 // InforF print info message
 func InforF(format string, args ...interface{}) {
-	log.Info(fmt.Sprintf(format, args...))
+	logger.Info(fmt.Sprintf(format, args...))
 }
 
 // WarningF print good message
@@ -70,7 +81,7 @@ func WarningF(format string, args ...interface{}) {
 
 // DebugF print debug message
 func DebugF(format string, args ...interface{}) {
-	log.Debug(fmt.Sprintf(format, args...))
+	logger.Debug(fmt.Sprintf(format, args...))
 }
 
 // ErrorF print good message
