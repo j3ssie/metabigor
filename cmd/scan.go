@@ -116,6 +116,16 @@ func runRoutine(input string, options core.Options) []string {
 }
 
 func runDetail(input string, options core.Options) []string {
+	if options.Scan.Flat {
+		return directDetail(input, options)
+	}
+	if input == "" {
+		return []string{}
+	}
+	if len(strings.Split(input, " - ")) == 1 {
+		return []string{}
+	}
+
 	host := strings.Split(input, " - ")[0]
 	ports := strings.Split(input, " - ")[1]
 	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v %v", host, ports))
@@ -123,6 +133,12 @@ func runDetail(input string, options core.Options) []string {
 }
 
 func directDetail(input string, options core.Options) []string {
+		if input == "" {
+		return []string{}
+	}
+	if len(strings.Split(input, ":")) == 1 {
+		return []string{}
+	}
 	host := strings.Split(input, ":")[0]
 	ports := strings.Split(input, ":")[1]
 	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v %v", host, ports))
