@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/jaeles-project/jaeles/libs"
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -110,7 +109,7 @@ func SendRequest(req HTTPRequest, options Options) HTTPResponse {
 	if len(errs) > 0 && res.StatusCode != 0 {
 		return res
 	} else if len(errs) > 0 {
-		libs.ErrorF("Error sending %v", errs)
+		ErrorF("Error sending %v", errs)
 		return HTTPResponse{}
 	}
 
