@@ -94,12 +94,6 @@ func runASN(input string, options core.Options) []string {
 		wg.Done()
 	}()
 
-	// wg.Add(1)
-	// go func() {
-	// 	data = append(data, modules.ASNSpyse(options)...)
-	// 	wg.Done()
-	// }()
-
 	wg.Wait()
 	return data
 }

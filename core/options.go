@@ -16,8 +16,9 @@ type Options struct {
 	Debug       bool
 	// Ports       string
 	// Rate        string
-	Scan ScanOptions
-	Net  NetOptions
+	Scan   ScanOptions
+	Net    NetOptions
+	Search SearchOptions
 }
 
 // ScanOptions options for net command
@@ -35,6 +36,14 @@ type ScanOptions struct {
 type NetOptions struct {
 	Asn string
 	Org string
+}
+
+// SearchOptions options for net command
+type SearchOptions struct {
+	Source   string
+	Query    string
+	Optimize bool
+	More     bool
 }
 
 // HTTPRequest all information about response

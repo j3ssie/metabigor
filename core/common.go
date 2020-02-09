@@ -53,6 +53,8 @@ func InitLog(options Options) {
 	} else {
 		logger.SetOutput(ioutil.Discard)
 	}
+
+	InforF("Metabigor %v by %v", VERSION, AUTHOR)
 	logger.Info(fmt.Sprintf("Store log file to: %v", logFile))
 }
 

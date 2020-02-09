@@ -1,14 +1,14 @@
 <p align="center">
   <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/2303/2303030.svg" height="140" />
-  <p align="center">Intelligence Framework but without API key</p>
+  <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
-    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-1.0-red.svg"></a>
+    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-0.3-red.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
   </p>
 </p>
 
 ## What is Metabigor?
-Metabigor is Intelligence Framework, its goal is to do OSINT tasks and more but without any API key.
+Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but without any API key.
 
 
 ## Installation
@@ -16,7 +16,6 @@ Metabigor is Intelligence Framework, its goal is to do OSINT tasks and more but 
 ```
 go get -u github.com/j3ssie/metabigor
 ```
-
 
 ### Example Commands
 
@@ -33,6 +32,9 @@ echo "1.2.3.4/24" | metabigor scan -p 443 -o /tmp/result.txt
 
 # running masscan on port all port and nmap on open port
 cat list_of_IPs | metabigor scan --detail -o /tmp/result.txt
+
+# search result on fofa
+echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
 ```
 
 ## Credits

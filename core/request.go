@@ -64,6 +64,11 @@ func SendRequest(req HTTPRequest, options Options) HTTPResponse {
 	url := req.URL
 	headers := req.Headers
 	body := req.Body
+	// default user-agent
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+	headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4052.0 Safari/537.36"
 
 	// new client
 	client := gorequest.New().TLSClientConfig(&tls.Config{InsecureSkipVerify: true})

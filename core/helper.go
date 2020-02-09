@@ -4,10 +4,12 @@ import (
 	"archive/zip"
 	"bufio"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -82,6 +84,7 @@ func ReadingFileUnique(filename string) []string {
 		if val == "" {
 			continue
 		}
+		val = strings.TrimSpace(val)
 		if seen[val] && unique {
 			continue
 		}
@@ -100,7 +103,7 @@ func ReadingFileUnique(filename string) []string {
 
 // WriteToFile write string to a file
 func WriteToFile(filename string, data string) (string, error) {
-	file, err := os.Create(filename)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return "", err
 	}
@@ -111,6 +114,12 @@ func WriteToFile(filename string, data string) (string, error) {
 		return "", err
 	}
 	return filename, file.Sync()
+}
+
+// Unique unique content of a file and remove blank line
+func Unique(filename string) {
+	data := ReadingFileUnique(filename)
+	WriteToFile(filename, strings.Join(data, "\n"))
 }
 
 // AppendToContent append string to a file
@@ -264,4 +273,33 @@ func StripPath(raw string) string {
 	raw = strings.Replace(raw, "/", "_", -1)
 	raw = strings.Replace(raw, " ", "_", -1)
 	return raw
+}
+
+// Base64Encode just Base64 Encode
+func Base64Encode(raw string) string {
+	return base64.StdEncoding.EncodeToString([]byte(raw))
+}
+
+// Base64Decode just Base64 Encode
+func Base64Decode(raw string) string {
+	data, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return raw
+	}
+	return string(data)
+}
+
+// URLDecode decode url
+func URLDecode(raw string) string {
+	decodedValue, err := url.QueryUnescape(raw)
+	if err != nil {
+		return raw
+	}
+	return decodedValue
+}
+
+// URLEncode Encode query
+func URLEncode(raw string) string {
+	decodedValue := url.QueryEscape(raw)
+	return decodedValue
 }

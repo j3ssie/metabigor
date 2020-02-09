@@ -133,7 +133,7 @@ func runDetail(input string, options core.Options) []string {
 }
 
 func directDetail(input string, options core.Options) []string {
-		if input == "" {
+	if input == "" {
 		return []string{}
 	}
 	if len(strings.Split(input, ":")) == 1 {

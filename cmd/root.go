@@ -34,11 +34,10 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&options.ConfigFile, "configFile", "~/.metabigor/config.yaml", "root Project")
 	RootCmd.PersistentFlags().StringVar(&options.Scan.TmpOutput, "tmp", "", "Temp Output folder")
 	RootCmd.PersistentFlags().StringVar(&options.Proxy, "proxy", "", "Proxy for doing request")
-	RootCmd.PersistentFlags().IntVarP(&options.Concurrency, "concurrency", "c", 3, "concurrency")
-	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 10, "timeout")
+	RootCmd.PersistentFlags().IntVarP(&options.Concurrency, "concurrency", "c", 5, "concurrency")
+	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 15, "timeout")
 	RootCmd.PersistentFlags().StringVarP(&options.Input, "input", "i", "-", "input as a string, file or from stdin")
 	RootCmd.PersistentFlags().StringVarP(&options.Output, "output", "o", "out.txt", "output name")
 	RootCmd.PersistentFlags().BoolVar(&options.Debug, "debug", false, "Debug")
@@ -49,9 +48,6 @@ func init() {
 func initConfig() {
 	if options.Debug {
 		options.Verbose = true
-	}
-	if options.Verbose {
-		core.InforF("Metabigor %v by %v\n", core.VERSION, core.AUTHOR)
 	}
 	core.InitLog(options)
 	// planned feature
