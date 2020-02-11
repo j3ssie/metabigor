@@ -8,8 +8,8 @@
 </p>
 
 ## What is Metabigor?
-Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but without any API key.
 
+Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but without any API key.
 
 ## Installation
 
@@ -20,17 +20,17 @@ go get -u github.com/j3ssie/metabigor
 ### Example Commands
 
 ```
-# discovery IP of ASN
+# discovery IP of a company/organization
 echo "company" | metabigor net --org -o /tmp/result.txt
 
-# discovery IP of ASN
+# discovery IP of an ASN
 echo "ASN1111" | metabigor net --asn -o /tmp/result.txt
 cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
 
-# running masscan on port 443
+# running masscan on port 443 for a subnet
 echo "1.2.3.4/24" | metabigor scan -p 443 -o /tmp/result.txt
 
-# running masscan on port all port and nmap on open port
+# running masscan on all port and nmap on open port
 cat list_of_IPs | metabigor scan --detail -o /tmp/result.txt
 
 # search result on fofa
