@@ -95,8 +95,13 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	// result := ""
 	data := core.GetFileContent(realNmapOutput)
 	rawResult := ParsingNmap(data)
+
 	for k, v := range rawResult {
-		result = append(result, fmt.Sprintf("%v - %v", k, strings.Join(v, ",")))
+		if options.Scan.Flat {
+			result = append(result, fmt.Sprintf("%v:%v", k, strings.Join(v, ",")))
+		} else {
+			result = append(result, fmt.Sprintf("%v - %v", k, strings.Join(v, ",")))
+		}
 	}
 
 	return result
