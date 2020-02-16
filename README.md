@@ -17,7 +17,17 @@ Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but witho
 go get -u github.com/j3ssie/metabigor
 ```
 
-### Example Commands
+## Main features
+
+- Discover IP Address of the target.
+- Wrapper for running masscan and nmap on IP target.
+- Do searching from command line on some search engine.
+
+## Demo
+
+[![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
+
+## Example Commands
 
 ```
 # discovery IP of a company/organization
