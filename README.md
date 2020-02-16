@@ -2,7 +2,7 @@
   <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/2303/2303030.svg" height="140" />
   <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
-    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-0.3-red.svg"></a>
+    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-1.1-red.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
   </p>
 </p>

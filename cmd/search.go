@@ -18,7 +18,7 @@ func init() {
 	var searchCmd = &cobra.Command{
 		Use:   "search",
 		Short: "Do Search on popular search engine",
-		Long:  fmt.Sprintf(`Metabigor - Intelligence Framework but without API key - %v by %v`, core.VERSION, core.AUTHOR),
+		Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 		RunE:  runSearch,
 	}
 

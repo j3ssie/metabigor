@@ -19,7 +19,7 @@ func init() {
 	var scanCmd = &cobra.Command{
 		Use:   "scan",
 		Short: "Wrapper to run scan from input",
-		Long:  fmt.Sprintf(`Metabigor - Intelligence Framework but without API key - %v by %v`, core.VERSION, core.AUTHOR),
+		Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 		RunE:  runScan,
 	}
 

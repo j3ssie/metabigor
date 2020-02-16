@@ -21,7 +21,7 @@ var config struct {
 var RootCmd = &cobra.Command{
 	Use:   "metabigor",
 	Short: "Metabigor",
-	Long:  fmt.Sprintf(`Metabigor - Intelligence Framework but without API key - %v by %v`, core.VERSION, core.AUTHOR),
+	Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 }
 
 // Execute main function
