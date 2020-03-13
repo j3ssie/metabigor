@@ -96,7 +96,11 @@ func runSearchSingle(input string, options core.Options) []string {
 	case "fofa":
 		data = append(data, modules.FoFaSearch(options)...)
 		break
+	case "ip":
+		data = append(data, modules.IPSearch(options)...)
+		break
 	}
+
 	return data
 }
 

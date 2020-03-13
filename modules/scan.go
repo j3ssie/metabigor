@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -94,7 +95,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	}
 	// result := ""
 	data := core.GetFileContent(realNmapOutput)
-	rawResult := ParsingNmap(data)
+	rawResult := ParsingNmap(data, options)
 
 	for k, v := range rawResult {
 		if options.Scan.Flat {
@@ -143,7 +144,7 @@ func ParsingMasscanXML(raw string) map[string][]string {
 }
 
 // ParsingNmap parse result from nmap XML format
-func ParsingNmap(raw string) map[string][]string {
+func ParsingNmap(raw string, options core.Options) map[string][]string {
 	result := make(map[string][]string)
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
@@ -152,6 +153,7 @@ func ParsingNmap(raw string) map[string][]string {
 	}
 	doc.Find("host").Each(func(i int, h *goquery.Selection) {
 		ip, _ := h.Find("address").First().Attr("addr")
+
 		h.Find("port").Each(func(j int, s *goquery.Selection) {
 			service, _ := s.Find("service").First().Attr("name")
 			product, ok := s.Find("service").First().Attr("product")
@@ -160,9 +162,41 @@ func ParsingNmap(raw string) map[string][]string {
 			}
 			port, _ := s.Attr("portid")
 			info := fmt.Sprintf("%v/%v/%v", port, service, product)
-			// fmt.Println(ip, port, service)
 			result[ip] = append(result[ip], strings.TrimSpace(info))
 		})
+
+		if options.Scan.NmapScripts != "" {
+			h.Find("script").Each(func(j int, s *goquery.Selection) {
+				id, _ := s.Attr("id")
+				scriptOutput, _ := s.Attr("output")
+
+				if scriptOutput != "" {
+					// grep script output with grepString
+					if options.Scan.GrepString != "" {
+						var vulnerable bool
+						if strings.Contains(scriptOutput, options.Scan.GrepString) {
+							vulnerable = true
+						} else {
+							r, err := regexp.Compile(options.Scan.GrepString)
+							if err == nil {
+								matches := r.FindStringSubmatch(scriptOutput)
+								if len(matches) > 0 {
+									vulnerable = true
+								}
+							}
+						}
+						if vulnerable {
+							vul := fmt.Sprintf("/vulnerable|%v", id)
+							result[ip] = append(result[ip], strings.TrimSpace(vul))
+						}
+					}
+
+					scriptOutput = strings.Replace(scriptOutput, "\n", "\\n", -1)
+					info := fmt.Sprintf("/script|%v;;out|%v", id, scriptOutput)
+					result[ip] = append(result[ip], strings.TrimSpace(info))
+				}
+			})
+		}
 	})
 
 	return result

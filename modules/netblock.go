@@ -39,7 +39,6 @@ func IPInfo(options core.Options) []string {
 			core.InforF(fmt.Sprintf("%s - %s", cidr, desc))
 			result = append(result, fmt.Sprintf("%s", cidr))
 		}
-
 	})
 	return result
 }

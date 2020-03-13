@@ -11,6 +11,22 @@ import (
 	"github.com/j3ssie/metabigor/core"
 )
 
+// IPSearch doing searching on Onyphe
+func IPSearch(options core.Options) []string {
+	var result []string
+	result = append(result, singleIPSearch(options.Search.Query, options)...)
+	if !options.Search.Optimize {
+		return result
+	}
+	return result
+}
+
+func singleIPSearch(query string, options core.Options) []string {
+	var result []string
+	result = append(result, Onyphe(query, options)...)
+	return result
+}
+
 // FoFaSearch doing searching on FoFa
 func FoFaSearch(options core.Options) []string {
 	var result []string

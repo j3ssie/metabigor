@@ -14,8 +14,6 @@ type Options struct {
 	Timeout     int
 	Verbose     bool
 	Debug       bool
-	// Ports       string
-	// Rate        string
 	Scan   ScanOptions
 	Net    NetOptions
 	Search SearchOptions
@@ -30,6 +28,7 @@ type ScanOptions struct {
 	SkipOverview bool
 	TmpOutput    string
 	NmapScripts  string
+	GrepString   string
 }
 
 // NetOptions options for net command

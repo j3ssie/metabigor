@@ -25,11 +25,12 @@ func init() {
 
 	scanCmd.Flags().StringP("ports", "p", "0-65535", "Port range for previous command")
 	scanCmd.Flags().StringP("rate", "r", "5000", "rate limit for masscan command")
-	scanCmd.Flags().Bool("detail", false, "Do Nmap scan based on previous output")
+	scanCmd.Flags().BoolP("detail","D", false, "Do Nmap scan based on previous output")
 
 	scanCmd.Flags().BoolP("flat", "f", false, "format output like this: 1.2.3.4:443")
 	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
-	scanCmd.Flags().String("nmap-script", "", "nmap scripts")
+	scanCmd.Flags().StringP("script","S", "", "nmap scripts")
+	scanCmd.Flags().StringP("grep","g", "", "match string to confirm script success")
 	// only parse scan
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
 
@@ -38,7 +39,8 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
-	options.Scan.NmapScripts, _ = cmd.Flags().GetString("nmap-script")
+	options.Scan.NmapScripts, _ = cmd.Flags().GetString("script")
+	options.Scan.GrepString, _ = cmd.Flags().GetString("grep")
 	options.Scan.Ports, _ = cmd.Flags().GetString("ports")
 	options.Scan.Rate, _ = cmd.Flags().GetString("rate")
 	options.Scan.Detail, _ = cmd.Flags().GetBool("detail")
@@ -164,7 +166,7 @@ func parseResult(resultFolder string, options core.Options) {
 			core.DebugF("Reading: %v", filename)
 			if strings.HasSuffix(file.Name(), "xml") && strings.HasPrefix(filename, "nmap") {
 				data := core.GetFileContent(filename)
-				rawResult := modules.ParsingNmap(data)
+				rawResult := modules.ParsingNmap(data, options)
 				for k, v := range rawResult {
 					fmt.Printf("%v - %v\n", k, strings.Join(v, ","))
 				}
