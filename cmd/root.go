@@ -17,10 +17,9 @@ var config struct {
 	port         string
 }
 
-// RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "metabigor",
-	Short: "Metabigor",
+	Short: "metabigor",
 	Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 }
 
@@ -76,4 +75,8 @@ func initConfig() {
 			options.Input = core.GetFileContent(options.Input)
 		}
 	}
+
+
+	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
+	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
 }

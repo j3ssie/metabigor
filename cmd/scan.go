@@ -12,10 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var scanCmd *cobra.Command
 
 func init() {
-	// byeCmd represents the bye command
 	var scanCmd = &cobra.Command{
 		Use:   "scan",
 		Short: "Wrapper to run scan from input",
@@ -38,7 +36,7 @@ func init() {
 
 }
 
-func runScan(cmd *cobra.Command, args []string) error {
+func runScan(cmd *cobra.Command, _ []string) error {
 	options.Scan.NmapScripts, _ = cmd.Flags().GetString("script")
 	options.Scan.GrepString, _ = cmd.Flags().GetString("grep")
 	options.Scan.Ports, _ = cmd.Flags().GetString("ports")

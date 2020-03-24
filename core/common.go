@@ -24,13 +24,12 @@ func InitLog(options Options) {
 	if !FolderExists(logDir) {
 		os.MkdirAll(logDir, 0755)
 	}
-	logFile := path.Join(logDir, "metabigor.log")
-	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	options.LogFile = path.Join(logDir, "metabigor.log")
+	f, err := os.OpenFile(options.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Error("error opening file: %v", err)
 	}
 
-	// defer f.Close()
 	mwr := io.MultiWriter(os.Stdout, f)
 
 	logger.SetLevel(logrus.InfoLevel)
@@ -53,9 +52,6 @@ func InitLog(options Options) {
 	} else {
 		logger.SetOutput(ioutil.Discard)
 	}
-
-	InforF("Metabigor %v by %v", VERSION, AUTHOR)
-	logger.Info(fmt.Sprintf("Store log file to: %v", logFile))
 }
 
 // GoodF print good message

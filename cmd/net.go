@@ -12,10 +12,7 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-var netCmd *cobra.Command
-
 func init() {
-	// byeCmd represents the bye command
 	var netCmd = &cobra.Command{
 		Use:   "net",
 		Short: "Discover Network Inforamtion about targets",
@@ -25,12 +22,16 @@ func init() {
 
 	netCmd.Flags().Bool("asn", false, "Take input as ASN")
 	netCmd.Flags().Bool("org", false, "Take input as Organization")
+	netCmd.Flags().BoolP("accurate", "x", false, "Only get from highly trusted source")
+
 	RootCmd.AddCommand(netCmd)
 }
 
-func runNet(cmd *cobra.Command, args []string) error {
+func runNet(cmd *cobra.Command, _ []string) error {
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
+	options.Net.Optimize, _ = cmd.Flags().GetBool("accurate")
+
 	var inputs []string
 
 	if options.Input == "-" || options.Input == "" {
@@ -108,11 +109,15 @@ func runOrg(input string, options core.Options) []string {
 		data = append(data, modules.OrgBgpDotNet(options)...)
 		wg.Done()
 	}()
-	wg.Add(1)
-	go func() {
-		data = append(data, modules.ASNLookup(options)...)
-		wg.Done()
-	}()
+
+	// disable when enable trusted source
+	if !options.Net.Optimize {
+		wg.Add(1)
+		go func() {
+			data = append(data, modules.ASNLookup(options)...)
+			wg.Done()
+		}()
+	}
 	wg.Wait()
 
 	var cidrs []string

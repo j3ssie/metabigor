@@ -6,6 +6,7 @@ type Options struct {
 	Output     string
 	TmpOutput  string
 	ConfigFile string
+	LogFile    string
 	Proxy      string
 
 	Concurrency int
@@ -14,9 +15,9 @@ type Options struct {
 	Timeout     int
 	Verbose     bool
 	Debug       bool
-	Scan   ScanOptions
-	Net    NetOptions
-	Search SearchOptions
+	Scan        ScanOptions
+	Net         NetOptions
+	Search      SearchOptions
 }
 
 // ScanOptions options for net command
@@ -33,8 +34,9 @@ type ScanOptions struct {
 
 // NetOptions options for net command
 type NetOptions struct {
-	Asn string
-	Org string
+	Asn      string
+	Org      string
+	Optimize bool
 }
 
 // SearchOptions options for net command

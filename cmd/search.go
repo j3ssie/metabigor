@@ -11,10 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var searchCmd *cobra.Command
 
 func init() {
-	// byeCmd represents the bye command
 	var searchCmd = &cobra.Command{
 		Use:   "search",
 		Short: "Do Search on popular search engine",
@@ -23,18 +21,17 @@ func init() {
 	}
 
 	searchCmd.Flags().StringP("source", "s", "fofa", "Search Engine")
-	searchCmd.Flags().StringSliceP("query", "q", []string{}, "Query to search")
+	searchCmd.Flags().StringSliceP("query", "q", []string{}, "Query to search (Multiple -q flags are accepted)")
 	searchCmd.Flags().BoolP("brute", "b", false, "Enable Brute Force")
 	searchCmd.Flags().BoolP("optimize", "x", false, "Enable Optimize Query")
 	RootCmd.AddCommand(searchCmd)
 }
 
-func runSearch(cmd *cobra.Command, args []string) error {
+func runSearch(cmd *cobra.Command, _ []string) error {
 	options.Search.Source, _ = cmd.Flags().GetString("source")
 	options.Search.Source = strings.ToLower(options.Search.Source)
 	options.Search.More, _ = cmd.Flags().GetBool("brute")
 	options.Search.Optimize, _ = cmd.Flags().GetBool("optimize")
-
 	queries, _ := cmd.Flags().GetStringSlice("query")
 
 	var inputs []string
