@@ -16,12 +16,10 @@ import (
 var logger = logrus.New()
 
 // InitLog init log
-func InitLog(options Options) {
-	logDir := options.Scan.TmpOutput
-	if logDir == "" {
+func InitLog(options *Options) {
+	if options.Scan.TmpOutput == "" {
 		options.Scan.TmpOutput = path.Join(os.TempDir(), "mtg-log")
 	}
-
 	if !FolderExists(options.Scan.TmpOutput) {
 		os.MkdirAll(options.Scan.TmpOutput, 0755)
 	}

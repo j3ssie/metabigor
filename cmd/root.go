@@ -48,7 +48,7 @@ func initConfig() {
 	if options.Debug {
 		options.Verbose = true
 	}
-	core.InitLog(options)
+	core.InitLog(&options)
 	// planned feature
 	// if !core.FileExists(options.ConfigFile) {
 	// 	core.InitConfig(options)
