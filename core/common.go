@@ -19,7 +19,7 @@ var logger = logrus.New()
 func InitLog(options Options) {
 	logDir := options.Scan.TmpOutput
 	if logDir == "" {
-		logDir = os.TempDir()
+		logDir = path.Join(os.TempDir(), "mtg-log")
 	}
 	if !FolderExists(logDir) {
 		os.MkdirAll(logDir, 0755)
