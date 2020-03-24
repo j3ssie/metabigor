@@ -19,12 +19,13 @@ var logger = logrus.New()
 func InitLog(options Options) {
 	logDir := options.Scan.TmpOutput
 	if logDir == "" {
-		logDir = path.Join(os.TempDir(), "mtg-log")
+		options.Scan.TmpOutput = path.Join(os.TempDir(), "mtg-log")
 	}
-	if !FolderExists(logDir) {
-		os.MkdirAll(logDir, 0755)
+
+	if !FolderExists(options.Scan.TmpOutput) {
+		os.MkdirAll(options.Scan.TmpOutput, 0755)
 	}
-	options.LogFile = path.Join(logDir, "metabigor.log")
+	options.LogFile = path.Join(options.Scan.TmpOutput, "metabigor.log")
 	f, err := os.OpenFile(options.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Error("error opening file: %v", err)

@@ -3,7 +3,6 @@ package modules
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -21,7 +20,7 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 
 	massOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(os.TempDir(), "masscan-*.txt")
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "masscan-*.txt")
 	if massOutput != "" {
 		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*.txt", core.StripPath(input)))
 	}
@@ -72,7 +71,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		ports = "443"
 	}
 	nmapOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(os.TempDir(), "nmap-*")
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "nmap-*")
 	if nmapOutput != "" {
 		tmpFile, _ = ioutil.TempFile(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
 	}
