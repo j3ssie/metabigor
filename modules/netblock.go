@@ -171,6 +171,32 @@ func OrgBgpDotNet(options core.Options) []string {
 	return result
 }
 
+
+// OrgBgbView get Org infor from bgpview.io
+func OrgBgbView(options core.Options) []string {
+	org := options.Net.Org
+	url := fmt.Sprintf(`https://bgpview.io/search/%v`, org)
+	core.InforF("Get data from: %v", url)
+	var result []string
+	content := core.RequestWithChrome(url, "results-tabs")
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
+	if err != nil {
+		return result
+	}
+
+	// searching for data
+	doc.Find("a").Each(func(i int, s *goquery.Selection) {
+		href, _ := s.Attr("href")
+		// https://bgpview.io/prefix/176.96.254.0/24
+		if strings.Contains(href, "https://bgpview.io/prefix/") {
+			//cidr := strings.Replace(href, "https://bgpview.io/prefix/", "", -1)
+			cidr := s.Text()
+			result = append(result, fmt.Sprintf("%s", cidr))
+		}
+	})
+	return result
+}
+
 // ASNLookup get Org CIDR from asnlookup
 func ASNLookup(options core.Options) []string {
 	org := options.Net.Org

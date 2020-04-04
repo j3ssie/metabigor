@@ -110,6 +110,12 @@ func runOrg(input string, options core.Options) []string {
 		wg.Done()
 	}()
 
+	wg.Add(1)
+	go func() {
+		data = append(data, modules.OrgBgbView(options)...)
+		wg.Done()
+	}()
+
 	// disable when enable trusted source
 	if !options.Net.Optimize {
 		wg.Add(1)

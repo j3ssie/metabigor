@@ -4,6 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,13 +18,24 @@ import (
 
 // RequestWithChrome Do request with real browser
 func RequestWithChrome(url string, contentID string) string {
-	// opts := append(chromedp.DefaultExecAllocatorOptions[:],
-	// 	chromedp.Flag("headless", false),
-	// 	chromedp.Flag("disable-gpu", true),
-	// 	chromedp.Flag("enable-automation", true),
-	// 	chromedp.Flag("disable-extensions", false),
-	// )
-	ctx, cancel := chromedp.NewContext(context.Background())
+	// prepare the chrome options
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.Flag("headless", true),
+		chromedp.Flag("ignore-certificate-errors", true),
+		chromedp.Flag("disable-gpu", true),
+		chromedp.Flag("enable-automation", true),
+		chromedp.Flag("disable-extensions", true),
+		chromedp.Flag("disable-setuid-sandbox", true),
+		chromedp.Flag("disable-web-security", true),
+		chromedp.Flag("no-first-run", true),
+		chromedp.Flag("no-default-browser-check", true),
+	)
+
+	allocCtx, bcancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, bcancel = context.WithTimeout(allocCtx, 10*time.Second)
+	defer bcancel()
+
+	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -28,14 +43,30 @@ func RequestWithChrome(url string, contentID string) string {
 	var data string
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
-		// chromedp.WaitVisible(contentID),
 		chromedp.OuterHTML(contentID, &data, chromedp.NodeVisible, chromedp.ByID),
 	)
+
+	// clean chromedp-runner folder
+	cleanUp()
+
 	if err != nil {
 		return ""
 	}
-
 	return data
+}
+
+func cleanUp() {
+	tmpFolder := path.Join(os.TempDir(), "chromedp-runner*")
+	if _, err := os.Stat("/tmp/"); !os.IsNotExist(err) {
+		tmpFolder = path.Join("/tmp/", "chromedp-runner*")
+	}
+	junks, err := filepath.Glob(tmpFolder)
+	if err != nil {
+		return
+	}
+	for _, junk := range junks {
+		os.RemoveAll(junk)
+	}
 }
 
 // SendGET just send GET request
