@@ -32,7 +32,6 @@ func RequestWithChrome(url string, contentID string) string {
 	)
 
 	allocCtx, bcancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	allocCtx, bcancel = context.WithTimeout(allocCtx, 10*time.Second)
 	defer bcancel()
 
 	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
