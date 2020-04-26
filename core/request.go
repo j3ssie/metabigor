@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/j3ssie/osmedeus/utils"
 	"log"
 	"os"
 	"path"
@@ -17,7 +18,7 @@ import (
 )
 
 // RequestWithChrome Do request with real browser
-func RequestWithChrome(url string, contentID string) string {
+func RequestWithChrome(url string, contentID string, timeout int) string {
 	// prepare the chrome options
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", true),
@@ -35,7 +36,7 @@ func RequestWithChrome(url string, contentID string) string {
 	defer bcancel()
 
 	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	// run task list
@@ -44,11 +45,13 @@ func RequestWithChrome(url string, contentID string) string {
 		chromedp.Navigate(url),
 		chromedp.OuterHTML(contentID, &data, chromedp.NodeVisible, chromedp.ByID),
 	)
+	utils.DebugF(data)
 
 	// clean chromedp-runner folder
 	cleanUp()
 
 	if err != nil {
+		utils.InforF("[ERRR] %v", err)
 		return ""
 	}
 	return data

@@ -83,11 +83,12 @@ func runASN(input string, options core.Options) []string {
 	options.Net.Asn = input
 	var data []string
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		data = append(data, modules.ASNBgpDotNet(options)...)
-		wg.Done()
-	}()
+
+	//wg.Add(1)
+	//go func() {
+	//	data = append(data, modules.ASNBgpDotNet(options)...)
+	//	wg.Done()
+	//}()
 
 	wg.Add(1)
 	go func() {

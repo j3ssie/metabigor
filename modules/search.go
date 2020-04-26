@@ -30,7 +30,7 @@ func singleIPSearch(query string, options core.Options) []string {
 // FoFaSearch doing searching on FoFa
 func FoFaSearch(options core.Options) []string {
 	var result []string
-	result = append(result, singleFoFaSearch(options.Search.Query)...)
+	result = append(result, singleFoFaSearch(options.Search.Query, options)...)
 
 	if !options.Search.Optimize {
 		return result
@@ -44,7 +44,7 @@ func FoFaSearch(options core.Options) []string {
 			wg.Add(1)
 			go func(query string) {
 				defer wg.Done()
-				result = append(result, singleFoFaSearch(query)...)
+				result = append(result, singleFoFaSearch(query, options)...)
 			}(moreQuery)
 			// limit the pool
 			count++
@@ -58,14 +58,14 @@ func FoFaSearch(options core.Options) []string {
 	return result
 }
 
-func singleFoFaSearch(query string) []string {
+func singleFoFaSearch(query string, options core.Options) []string {
 	core.InforF("Fofa Query: %v", query)
 	query = core.Base64Encode(query)
 	url := fmt.Sprintf(`https://fofa.so/result?qbase64=%v`, query)
 	core.DebugF("Get data from: %v", url)
 	var result []string
 
-	content := core.RequestWithChrome(url, "ajax_content")
+	content := core.RequestWithChrome(url, "ajax_content", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result

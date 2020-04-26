@@ -23,7 +23,7 @@ func IPInfo(options core.Options) []string {
 	url := fmt.Sprintf(`https://ipinfo.io/AS%v`, asn)
 	var result []string
 	core.InforF("Get data from: %v", url)
-	content := core.RequestWithChrome(url, "ipTabContent")
+	content := core.RequestWithChrome(url, "ipTabContent", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
@@ -100,7 +100,7 @@ func ASNBgpDotNet(options core.Options) []string {
 	url := fmt.Sprintf(`https://bgp.he.net/AS%v#_prefixes`, asn)
 	core.InforF("Get data from: %v", url)
 	var result []string
-	content := core.RequestWithChrome(url, "prefixes")
+	content := core.RequestWithChrome(url, "prefixes", options.Timeout * 4)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
@@ -124,7 +124,7 @@ func ASNSpyse(options core.Options) []string {
 	url := fmt.Sprintf(`https://spyse.com/target/as/%v#c-domain__anchor--3--%v`, asn, asn)
 	var result []string
 	core.InforF("Get data from: %v", url)
-	content := core.RequestWithChrome(url, "asn-ipv4-ranges")
+	content := core.RequestWithChrome(url, "asn-ipv4-ranges", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
@@ -151,7 +151,7 @@ func OrgBgpDotNet(options core.Options) []string {
 	url := fmt.Sprintf(`https://bgp.he.net/search?search%%5Bsearch%%5D=%v&commit=Search`, org)
 	core.InforF("Get data from: %v", url)
 	var result []string
-	content := core.RequestWithChrome(url, "search")
+	content := core.RequestWithChrome(url, "search", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
@@ -178,7 +178,7 @@ func OrgBgbView(options core.Options) []string {
 	url := fmt.Sprintf(`https://bgpview.io/search/%v`, org)
 	core.InforF("Get data from: %v", url)
 	var result []string
-	content := core.RequestWithChrome(url, "results-tabs")
+	content := core.RequestWithChrome(url, "results-tabs", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
