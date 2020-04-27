@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/j3ssie/osmedeus/utils"
 	"log"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/j3ssie/osmedeus/utils"
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -45,7 +45,7 @@ func RequestWithChrome(url string, contentID string, timeout int) string {
 		chromedp.Navigate(url),
 		chromedp.OuterHTML(contentID, &data, chromedp.NodeVisible, chromedp.ByID),
 	)
-	utils.DebugF(data)
+	DebugF(data)
 
 	// clean chromedp-runner folder
 	cleanUp()
