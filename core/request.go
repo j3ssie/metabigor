@@ -1,187 +1,148 @@
 package core
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
-	"os"
-	"path"
-	"path/filepath"
+	"github.com/go-resty/resty"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/chromedp/chromedp"
-	"github.com/parnurzeal/gorequest"
 )
 
-// RequestWithChrome Do request with real browser
-func RequestWithChrome(url string, contentID string, timeout int) string {
-	// prepare the chrome options
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
-		chromedp.Flag("ignore-certificate-errors", true),
-		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("enable-automation", true),
-		chromedp.Flag("disable-extensions", true),
-		chromedp.Flag("disable-setuid-sandbox", true),
-		chromedp.Flag("disable-web-security", true),
-		chromedp.Flag("no-first-run", true),
-		chromedp.Flag("no-default-browser-check", true),
-	)
-
-	allocCtx, bcancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer bcancel()
-
-	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
-	defer cancel()
-
-	// run task list
-	var data string
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
-		chromedp.OuterHTML(contentID, &data, chromedp.NodeVisible, chromedp.ByID),
-	)
-	DebugF(data)
-
-	// clean chromedp-runner folder
-	cleanUp()
-
-	if err != nil {
-		InforF("[ERRR] %v", err)
-		return ""
-	}
-	return data
-}
-
-func cleanUp() {
-	tmpFolder := path.Join(os.TempDir(), "chromedp-runner*")
-	if _, err := os.Stat("/tmp/"); !os.IsNotExist(err) {
-		tmpFolder = path.Join("/tmp/", "chromedp-runner*")
-	}
-	junks, err := filepath.Glob(tmpFolder)
-	if err != nil {
-		return
-	}
-	for _, junk := range junks {
-		os.RemoveAll(junk)
-	}
-}
+var headers map[string]string
 
 // SendGET just send GET request
 func SendGET(url string, options Options) string {
-	req := HTTPRequest{
-		Method: "GET",
-		URL:    url,
+	headers = map[string]string{
+		"UserAgent":  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+		"Accept":     "*/*",
+		"AcceptLang": "en-US,en;q=0.8",
 	}
-	resp := SendRequest(req, options)
+	resp, _ := JustSend(options, "GET", url, headers)
 	return resp.Body
 }
 
 // SendPOST just send POST request
 func SendPOST(url string, options Options) string {
-	req := HTTPRequest{
-		Method: "POST",
-		URL:    url,
-	}
-	resp := SendRequest(req, options)
+	resp, _ := JustSend(options, "POST", url, headers)
 	return resp.Body
 }
 
-// SendRequest just send GET request
-func SendRequest(req HTTPRequest, options Options) HTTPResponse {
-	method := req.Method
-	url := req.URL
-	headers := req.Headers
-	body := req.Body
-	// default user-agent
-	if headers == nil {
-		headers = make(map[string]string)
-	}
-	headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4052.0 Safari/537.36"
+// JustSend just sending request
+func JustSend(options Options, method string, url string, headers map[string]string) (res Response, err error) {
 
-	// new client
-	client := gorequest.New().TLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-	client.Timeout(time.Duration(options.Timeout) * time.Second)
-	if options.Proxy != "" {
-		client.Proxy(options.Proxy)
+	timeout := options.Timeout
+
+	// disable log when retry
+	logger := logrus.New()
+	if !options.Debug {
+		logger.Out = ioutil.Discard
 	}
-	var res HTTPResponse
-	// choose method
+
+	client := resty.New()
+	client.SetLogger(logger)
+	client.SetTransport(&http.Transport{
+		MaxIdleConns:          100,
+		MaxConnsPerHost:       1000,
+		IdleConnTimeout:       time.Duration(timeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(timeout) * time.Second,
+		ResponseHeaderTimeout: time.Duration(timeout) * time.Second,
+		TLSHandshakeTimeout:   time.Duration(timeout) * time.Second,
+		DisableCompression:    true,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+	})
+
+	client.SetHeaders(headers)
+	client.SetCloseConnection(true)
+
+	client.SetTimeout(time.Duration(timeout) * time.Second)
+	client.SetRetryWaitTime(time.Duration(timeout/2) * time.Second)
+	client.SetRetryMaxWaitTime(time.Duration(timeout) * time.Second)
+
+	var resp *resty.Response
+	// really sending things here
+	method = strings.ToLower(strings.TrimSpace(method))
 	switch method {
-	case "GET":
-		client.Get(url)
+	case "get":
+		resp, err = client.R().
+			Get(url)
 		break
-	case "POST":
-		client.Post(url)
-		break
-	case "PUT":
-		client.Put(url)
-		break
-	case "HEAD":
-		client.Head(url)
-		break
-	case "PATCH":
-		client.Patch(url)
-		break
-	case "DELETE":
-		client.Delete(url)
+	case "post":
+		resp, err = client.R().
+			Get(url)
 		break
 	}
 
-	timeStart := time.Now()
-	for k, v := range headers {
-		client.AppendHeader(k, v)
-	}
-	if body != "" {
-		client.Send(body)
+	// in case we want to get redirect stuff
+	if res.StatusCode != 0 {
+		return res, nil
 	}
 
-	// really sending stuff
-	resp, resBody, errs := client.End()
-	resTime := time.Since(timeStart).Seconds()
-
-	if len(errs) > 0 && res.StatusCode != 0 {
-		return res
-	} else if len(errs) > 0 {
-		ErrorF("Error sending %v", errs)
-		return HTTPResponse{}
+	if err != nil || resp == nil {
+		ErrorF("%v %v", url, err)
+		return Response{}, err
 	}
 
-	resp.Body.Close()
-	// return ParseResponse(resp, resBody, resTime), nil
-
-	return ParseResponse(resp, resBody, resTime)
-
+	return ParseResponse(*resp), nil
 }
 
 // ParseResponse field to Response
-func ParseResponse(resp gorequest.Response, resBody string, resTime float64) (res HTTPResponse) {
+func ParseResponse(resp resty.Response) (res Response) {
 	// var res libs.Response
-	resLength := len(string(resBody))
-
+	resLength := len(string(resp.Body()))
 	// format the headers
 	var resHeaders []map[string]string
-	for k, v := range resp.Header {
+	for k, v := range resp.RawResponse.Header {
 		element := make(map[string]string)
 		element[k] = strings.Join(v[:], "")
 		resLength += len(fmt.Sprintf("%s: %s\n", k, strings.Join(v[:], "")))
 		resHeaders = append(resHeaders, element)
 	}
-	// respones time in second
+	// response time in second
+	resTime := float64(resp.Time()) / float64(time.Second)
 	resHeaders = append(resHeaders,
 		map[string]string{"Total Length": strconv.Itoa(resLength)},
 		map[string]string{"Response Time": fmt.Sprintf("%f", resTime)},
 	)
 
 	// set some variable
-	res.Headers = resp.Header
-	res.StatusCode = resp.StatusCode
-	res.Status = resp.Status
-	res.Body = resBody
+	res.Headers = resHeaders
+	res.StatusCode = resp.StatusCode()
+	res.Status = fmt.Sprintf("%v %v", resp.Status(), resp.RawResponse.Proto)
+	res.Body = string(resp.Body())
 	res.ResponseTime = resTime
 	res.Length = resLength
+	// beautify
+	res.Beautify = BeautifyResponse(res)
+	res.BeautifyHeader = BeautifyHeaders(res)
 	return res
+}
+
+// BeautifyHeaders beautify response headers
+func BeautifyHeaders(res Response) string {
+	beautifyHeader := fmt.Sprintf("%v \n", res.Status)
+	for _, header := range res.Headers {
+		for key, value := range header {
+			beautifyHeader += fmt.Sprintf("%v: %v\n", key, value)
+		}
+	}
+	return beautifyHeader
+}
+
+// BeautifyResponse beautify response
+func BeautifyResponse(res Response) string {
+	var beautifyRes string
+	beautifyRes += fmt.Sprintf("%v \n", res.Status)
+
+	for _, header := range res.Headers {
+		for key, value := range header {
+			beautifyRes += fmt.Sprintf("%v: %v\n", key, value)
+		}
+	}
+
+	beautifyRes += fmt.Sprintf("\n%v\n", res.Body)
+	return beautifyRes
 }

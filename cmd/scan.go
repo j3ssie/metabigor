@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 func init() {
 	var scanCmd = &cobra.Command{
 		Use:   "scan",
@@ -23,12 +22,12 @@ func init() {
 
 	scanCmd.Flags().StringP("ports", "p", "0-65535", "Port range for previous command")
 	scanCmd.Flags().StringP("rate", "r", "5000", "rate limit for masscan command")
-	scanCmd.Flags().BoolP("detail","D", false, "Do Nmap scan based on previous output")
+	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
 
 	scanCmd.Flags().BoolP("flat", "f", false, "format output like this: 1.2.3.4:443")
 	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
-	scanCmd.Flags().StringP("script","S", "", "nmap scripts")
-	scanCmd.Flags().StringP("grep","g", "", "match string to confirm script success")
+	scanCmd.Flags().StringP("script", "S", "", "nmap scripts")
+	scanCmd.Flags().StringP("grep", "g", "", "match string to confirm script success")
 	// only parse scan
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
 

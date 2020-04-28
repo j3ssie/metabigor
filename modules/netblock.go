@@ -100,7 +100,7 @@ func ASNBgpDotNet(options core.Options) []string {
 	url := fmt.Sprintf(`https://bgp.he.net/AS%v#_prefixes`, asn)
 	core.InforF("Get data from: %v", url)
 	var result []string
-	content := core.RequestWithChrome(url, "prefixes", options.Timeout * 4)
+	content := core.RequestWithChrome(url, "prefixes", options.Timeout*4)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return result
@@ -170,7 +170,6 @@ func OrgBgpDotNet(options core.Options) []string {
 	})
 	return result
 }
-
 
 // OrgBgbView get Org infor from bgpview.io
 func OrgBgbView(options core.Options) []string {

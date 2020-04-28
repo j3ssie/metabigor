@@ -76,7 +76,6 @@ func initConfig() {
 		}
 	}
 
-
 	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
 	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
 }

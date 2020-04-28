@@ -102,14 +102,14 @@ func OptimizeFofaQuery(options core.Options) []string {
 	query := core.Base64Encode(options.Search.Query)
 	url := fmt.Sprintf(`https://fofa.so/search/result_stats?qbase64=%v`, query)
 	core.DebugF("Get optimize data from: %v", url)
-	req := core.HTTPRequest{
-		Method: "GET",
-		URL:    url,
-		Headers: map[string]string{
-			"X-Requested-With": "XMLHttpRequest",
-		},
+
+	headers := map[string]string{
+		"UserAgent":        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+		"Accept":           "*/*",
+		"AcceptLang":       "en-US,en;q=0.8",
+		"X-Requested-With": "XMLHttpRequest",
 	}
-	res := core.SendRequest(req, options)
+	res, _ := core.JustSend(options, "GET", url, headers)
 	content := res.Body
 
 	var result []string

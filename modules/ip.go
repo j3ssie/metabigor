@@ -70,8 +70,8 @@ func ParseOnyphe(content string, options core.Options) []string {
 
 	// more info in verbose mode
 	if options.Verbose {
-		for k,v := range info {
-			data := fmt.Sprintf("%v|%v", k,v)
+		for k, v := range info {
+			data := fmt.Sprintf("%v|%v", k, v)
 			result = append(result, data)
 		}
 	}

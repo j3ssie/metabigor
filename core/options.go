@@ -47,21 +47,32 @@ type SearchOptions struct {
 	More     bool
 }
 
-// HTTPRequest all information about response
-type HTTPRequest struct {
-	Method  string
-	URL     string
-	Headers map[string]string
-	Body    string
+// Request all information about request
+type Request struct {
+	Timeout  int
+	Repeat   int
+	Scheme   string
+	Host     string
+	Port     string
+	Path     string
+	URL      string
+	Proxy    string
+	Method   string
+	Redirect bool
+	Headers  []map[string]string
+	Body     string
+	Beautify string
 }
 
-// HTTPResponse all information about response
-type HTTPResponse struct {
-	StatusCode   int
-	Status       string
-	Headers      map[string][]string
-	Body         string
-	ResponseTime float64
-	Length       int
-	Beautify     string
+// Response all information about response
+type Response struct {
+	HasPopUp       bool
+	StatusCode     int
+	Status         string
+	Headers        []map[string]string
+	Body           string
+	ResponseTime   float64
+	Length         int
+	Beautify       string
+	BeautifyHeader string
 }
