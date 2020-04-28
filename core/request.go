@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/j3ssie/osmedeus/utils"
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -51,7 +50,7 @@ func RequestWithChrome(url string, contentID string, timeout int) string {
 	cleanUp()
 
 	if err != nil {
-		utils.InforF("[ERRR] %v", err)
+		InforF("[ERRR] %v", err)
 		return ""
 	}
 	return data
