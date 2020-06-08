@@ -2,7 +2,7 @@
   <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/2303/2303030.svg" height="140" />
   <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
-    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-1.1-red.svg"></a>
+    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-1.5-red.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
   </p>
 </p>
@@ -45,6 +45,9 @@ cat list_of_IPs | metabigor scan --detail -o /tmp/result.txt
 
 # search result on fofa
 echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
+
+# search IP on shodan
+echo '1.2.3.4' | metabigor ip -s 'shodan' -v
 ```
 
 ## Credits

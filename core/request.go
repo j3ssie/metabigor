@@ -33,7 +33,6 @@ func SendPOST(url string, options Options) string {
 
 // JustSend just sending request
 func JustSend(options Options, method string, url string, headers map[string]string) (res Response, err error) {
-
 	timeout := options.Timeout
 
 	// disable log when retry
@@ -61,6 +60,10 @@ func JustSend(options Options, method string, url string, headers map[string]str
 	client.SetTimeout(time.Duration(timeout) * time.Second)
 	client.SetRetryWaitTime(time.Duration(timeout/2) * time.Second)
 	client.SetRetryMaxWaitTime(time.Duration(timeout) * time.Second)
+
+	if options.Proxy != "" {
+		client.SetProxy(options.Proxy)
+	}
 
 	var resp *resty.Response
 	// really sending things here
