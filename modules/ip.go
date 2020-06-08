@@ -3,6 +3,7 @@ package modules
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/genkiroid/cert"
 	"github.com/j3ssie/metabigor/core"
 	"strings"
 )
@@ -17,7 +18,7 @@ func Onyphe(query string, options core.Options) []string {
 		return result
 	}
 	info := ParseOnyphe(content)
-	if options.Verbose {
+	if !options.Verbose {
 		result = append(result, fmt.Sprintf("[onyphe] %v ports|%v", query, info["ports"]))
 		return result
 	}
@@ -25,6 +26,10 @@ func Onyphe(query string, options core.Options) []string {
 		if key != "port" {
 			result = append(result, fmt.Sprintf("[onyphe] %v %v|%v", query, key, value))
 		}
+	}
+	cert := CertsInfo(query, info["ports"])
+	if cert != "" {
+		result = append(result, cert)
 	}
 	return result
 }
@@ -40,7 +45,7 @@ func Shodan(query string, options core.Options) []string {
 		return result
 	}
 	info := ParseShodan(content)
-	if options.Verbose {
+	if !options.Verbose {
 		result = append(result, fmt.Sprintf("[shodan] %v ports|%v", query, info["ports"]))
 		return result
 	}
@@ -48,6 +53,10 @@ func Shodan(query string, options core.Options) []string {
 		if key != "port" {
 			result = append(result, fmt.Sprintf("[shodan] %v %v|%v", query, key, value))
 		}
+	}
+	cert := CertsInfo(query, info["ports"])
+	if cert != "" {
+		result = append(result, cert)
 	}
 	return result
 }
@@ -158,13 +167,44 @@ func ParseShodan(content string) map[string]string {
 
 	// ports part
 	var ports []string
-	doc.Find(".services").Each(func(i int, s *goquery.Selection) {
+	doc.Find(".services .service-long").Each(func(i int, s *goquery.Selection) {
 		port := strings.Replace(strings.TrimSpace(s.Find(".service-details").Text()), "\n", "/", -1)
 		port = strings.Replace(port, "///", "", -1)
 		if port != "" {
 			ports = append(ports, port)
 		}
 	})
+	//fmt.Println(ports)
 	info["ports"] = strings.Join(ports, ",")
 	return info
+}
+
+// CertsInfo get cert info
+func CertsInfo(query string, rports string) string {
+	var certs cert.Certs
+	var err error
+	var domains []string
+	cert.SkipVerify = true
+	ports := strings.Split(rports, ",")
+
+	for _, port := range ports {
+		if strings.Contains(port, "/") {
+			port = strings.Split(port, "/")[0]
+		}
+		raw := fmt.Sprintf("%v:%v", query, port)
+		core.DebugF("SSL Info: %v", raw)
+		certs, err = cert.NewCerts([]string{raw})
+		if err != nil {
+			continue
+		}
+		for _, certItem := range certs {
+			for _, domain := range certItem.SANs {
+				domains = append(domains, domain)
+			}
+		}
+	}
+	if len(domains) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("[Cert] %v %v", query, strings.Join(domains, ","))
 }
