@@ -2,7 +2,7 @@
   <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/2303/2303030.svg" height="140" />
   <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
-    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/badge/version-1.5-red.svg"></a>
+    <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/github/v/release/j3ssie/metabigor.svg"></a>
     <a href=""><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
   </p>
 </p>
@@ -52,7 +52,7 @@ echo '1.2.3.4' | metabigor ip -s 'shodan' -v
 
 ## Credits
 
-Logo from [flaticon](https://www.flaticon.com/free-icon/metabolism_1774457) by [freepik
+Logo from [flaticon](https://www.flaticon.com/free-icon/wifi_2303030) by [freepik
 ](https://www.flaticon.com/authors/freepik)
 
 ## Disclaimer

@@ -3,13 +3,14 @@ package core
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/go-resty/resty"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-resty/resty"
+	"github.com/sirupsen/logrus"
 )
 
 var headers map[string]string
