@@ -76,9 +76,9 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		tmpFile, _ = ioutil.TempFile(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
 	}
 	nmapOutput = tmpFile.Name()
-	nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 -oA %v", ports, input, nmapOutput)
+	nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
 	if options.Scan.NmapScripts != "" {
-		nmapCmd = fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --script %v -oA %v", ports, input, options.Scan.NmapScripts, nmapOutput)
+		nmapCmd = fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open --script %v -oA %v", ports, input, options.Scan.NmapScripts, nmapOutput)
 	}
 	core.DebugF("Execute: %v", nmapCmd)
 	command := []string{

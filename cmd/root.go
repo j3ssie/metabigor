@@ -36,7 +36,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&options.Scan.TmpOutput, "tmp", "", "Temp Output folder")
 	RootCmd.PersistentFlags().StringVar(&options.Proxy, "proxy", "", "Proxy for doing request")
 	RootCmd.PersistentFlags().IntVarP(&options.Concurrency, "concurrency", "c", 5, "concurrency")
-	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 30, "timeout")
+	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 40, "timeout")
 	RootCmd.PersistentFlags().StringVarP(&options.Input, "input", "i", "-", "input as a string, file or from stdin")
 	RootCmd.PersistentFlags().StringVarP(&options.Output, "output", "o", "out.txt", "output name")
 	RootCmd.PersistentFlags().BoolVar(&options.Debug, "debug", false, "Debug")
