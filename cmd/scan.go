@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/j3ssie/osmedeus/utils"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -76,8 +75,8 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	if options.Scan.ZmapOverview {
 		inputFile := StoreTmpInput(inputs, options)
 		ports := core.GenPorts(options.Scan.Ports)
-		utils.DebugF("Store temp input in: %v", inputFile)
-		utils.DebugF("Run port scan with: %v", ports)
+		core.DebugF("Store temp input in: %v", inputFile)
+		core.DebugF("Run port scan with: %v", ports)
 		if inputFile == "" || len(ports) == 0 {
 			core.ErrorF("Error gen input or ports")
 			return nil
