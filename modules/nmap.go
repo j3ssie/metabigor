@@ -2,6 +2,7 @@ package modules
 
 import (
 	"encoding/xml"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/j3ssie/metabigor/core"
 	"regexp"
