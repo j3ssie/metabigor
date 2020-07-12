@@ -33,14 +33,16 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&options.Scan.TmpOutput, "tmp", "", "Temp Output folder")
+	RootCmd.PersistentFlags().StringVarP(&options.Scan.TmpOutput, "tmp", "T", "", "Temp Output folder")
 	RootCmd.PersistentFlags().StringVar(&options.Proxy, "proxy", "", "Proxy for doing request")
 	RootCmd.PersistentFlags().IntVarP(&options.Concurrency, "concurrency", "c", 5, "concurrency")
 	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 40, "timeout")
 	RootCmd.PersistentFlags().StringVarP(&options.Input, "input", "i", "-", "input as a string, file or from stdin")
 	RootCmd.PersistentFlags().StringVarP(&options.Output, "output", "o", "out.txt", "output name")
 	RootCmd.PersistentFlags().BoolVar(&options.Debug, "debug", false, "Debug")
+	RootCmd.PersistentFlags().BoolVarP(&options.JsonOutput, "json", "j", false, "Output as JSON")
 	RootCmd.PersistentFlags().BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose")
+	RootCmd.SetHelpFunc(RootMessage)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -78,4 +80,35 @@ func initConfig() {
 
 	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
 	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
+}
+
+// RootMessage print help message
+func RootMessage(cmd *cobra.Command, _ []string) {
+	fmt.Printf(cmd.UsageString())
+	h := `
+Examples Commands:
+# discovery IP of a company/organization
+echo "company" | metabigor net --org -o /tmp/result.txt
+
+# discovery IP of an ASN
+echo "ASN1111" | metabigor net --asn -o /tmp/result.txt
+cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
+
+# Only run masscan full ports
+echo '1.2.3.4/24' | metabigor scan -o result.txt
+
+# Only run nmap detail scan
+echo '1.2.3.4:21' | metabigor scan -s -c 10
+echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
+
+# Only run scan with zmap
+cat ranges.txt | metabigor scan -p '443,80' -z
+
+# search result on fofa
+echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
+
+# search IP on shodan
+echo '1.2.3.4' | metabigor ip -s 'shodan' -v
+`
+	fmt.Printf(h)
 }

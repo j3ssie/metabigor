@@ -13,6 +13,7 @@ type Options struct {
 	Delay       int
 	SaveRaw     bool
 	Timeout     int
+	JsonOutput  bool
 	Verbose     bool
 	Debug       bool
 	Scan        ScanOptions
@@ -24,6 +25,8 @@ type Options struct {
 type ScanOptions struct {
 	Ports        string
 	Rate         string
+	NmapOverview bool
+	ZmapOverview bool
 	Detail       bool
 	Flat         bool
 	SkipOverview bool

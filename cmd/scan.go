@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/j3ssie/osmedeus/utils"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -24,13 +25,16 @@ func init() {
 	scanCmd.Flags().StringP("rate", "r", "5000", "rate limit for masscan command")
 	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
 
-	scanCmd.Flags().BoolP("flat", "f", false, "format output like this: 1.2.3.4:443")
+	scanCmd.Flags().BoolP("flat", "f", true, "format output like this: 1.2.3.4:443")
+	scanCmd.Flags().BoolP("nmap", "n", false, "Use nmap instead of masscan for overview scan")
+	scanCmd.Flags().BoolP("zmap", "z", false, "Only scan range with zmap")
+
 	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
 	scanCmd.Flags().StringP("script", "S", "", "nmap scripts")
 	scanCmd.Flags().StringP("grep", "g", "", "match string to confirm script success")
 	// only parse scan
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
-
+	scanCmd.SetHelpFunc(ScanHelp)
 	RootCmd.AddCommand(scanCmd)
 
 }
@@ -42,6 +46,8 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	options.Scan.Rate, _ = cmd.Flags().GetString("rate")
 	options.Scan.Detail, _ = cmd.Flags().GetBool("detail")
 	options.Scan.Flat, _ = cmd.Flags().GetBool("flat")
+	options.Scan.NmapOverview, _ = cmd.Flags().GetBool("nmap")
+	options.Scan.ZmapOverview, _ = cmd.Flags().GetBool("zmap")
 	options.Scan.SkipOverview, _ = cmd.Flags().GetBool("skip-masscan")
 	// only parse result
 	resultFolder, _ := cmd.Flags().GetString("result-folder")
@@ -66,6 +72,35 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	// var detailResult []string
 	var wg sync.WaitGroup
 	jobs := make(chan string)
+
+	if options.Scan.ZmapOverview {
+		inputFile := StoreTmpInput(inputs, options)
+		ports := core.GenPorts(options.Scan.Ports)
+		utils.DebugF("Store temp input in: %v", inputFile)
+		utils.DebugF("Run port scan with: %v", ports)
+		if inputFile == "" || len(ports) == 0 {
+			core.ErrorF("Error gen input or ports")
+			return nil
+		}
+		for i := 0; i < options.Concurrency; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for job := range jobs {
+					// do real stuff here
+					core.BannerF("Run zmap scan on port ", job)
+					result = modules.RunZmap(inputFile, job, options)
+					StoreData(result, options)
+				}
+			}()
+		}
+		for _, port := range ports {
+			jobs <- port
+		}
+		close(jobs)
+		wg.Wait()
+		return nil
+	}
 
 	for i := 0; i < options.Concurrency; i++ {
 		wg.Add(1)
@@ -94,9 +129,15 @@ func runScan(cmd *cobra.Command, _ []string) error {
 }
 
 func runRoutine(input string, options core.Options) []string {
-	core.BannerF("Run quick scan on: ", input)
+	core.BannerF("Run overview scan on: ", input)
 	var data []string
-	data = append(data, modules.RunMasscan(input, options)...)
+
+	if options.Scan.NmapOverview {
+		data = append(data, modules.RunNmap(input, "", options)...)
+	} else {
+		data = append(data, modules.RunMasscan(input, options)...)
+	}
+
 	if !options.Scan.Detail {
 		return data
 	}
@@ -127,7 +168,7 @@ func runDetail(input string, options core.Options) []string {
 
 	host := strings.Split(input, " - ")[0]
 	ports := strings.Split(input, " - ")[1]
-	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v %v", host, ports))
+	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v:%v", host, ports))
 	return modules.RunNmap(host, ports, options)
 }
 
@@ -140,7 +181,7 @@ func directDetail(input string, options core.Options) []string {
 	}
 	host := strings.Split(input, ":")[0]
 	ports := strings.Split(input, ":")[1]
-	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v %v", host, ports))
+	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v:%v", host, ports))
 	return modules.RunNmap(host, ports, options)
 }
 
@@ -163,9 +204,9 @@ func parseResult(resultFolder string, options core.Options) {
 			core.DebugF("Reading: %v", filename)
 			if strings.HasSuffix(file.Name(), "xml") && strings.HasPrefix(filename, "nmap") {
 				data := core.GetFileContent(filename)
-				rawResult := modules.ParsingNmap(data, options)
-				for k, v := range rawResult {
-					fmt.Printf("%v - %v\n", k, strings.Join(v, ","))
+				result := modules.ParseNmap(data, options)
+				if len(result) > 0 {
+					fmt.Printf(strings.Join(result, "\n"))
 				}
 			}
 		}
@@ -188,4 +229,31 @@ func parseResult(resultFolder string, options core.Options) {
 			}
 		}
 	}
+}
+
+// StoreTmpInput store list of string to tmp file
+func StoreTmpInput(raw []string, options core.Options) string {
+	tmpDest := options.Scan.TmpOutput
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "zmap-*.txt")
+	if tmpDest != "" {
+		tmpFile, _ = ioutil.TempFile(tmpDest, "zmap-input-*.txt")
+	}
+	tmpDest = tmpFile.Name()
+	core.WriteToFile(tmpDest, strings.Join(raw, "\n"))
+	return tmpDest
+}
+
+// ScanHelp print help message
+func ScanHelp(cmd *cobra.Command, _ []string) {
+	fmt.Println(cmd.UsageString())
+	h := "\nExample Commands:\n"
+	h += "  # Only run masscan full ports\n"
+	h += "  echo '1.2.3.4/24' | metabigor scan -o result.txt\n\n"
+	h += "  # Only run nmap detail scan\n"
+	h += "  echo '1.2.3.4:21' | metabigor scan -s -c 10\n"
+	h += "  echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt\n\n"
+	h += "  # Only run scan with zmap \n"
+	h += "  cat ranges.txt | metabigor scan -p '443,80' -z\n"
+	h += "\n"
+	fmt.Printf(h)
 }

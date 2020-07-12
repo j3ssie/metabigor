@@ -2,12 +2,11 @@ package modules
 
 import (
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"os/exec"
-	"regexp"
 	"strings"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/j3ssie/metabigor/core"
 )
 
@@ -66,7 +65,10 @@ func RunMasscan(input string, options core.Options) []string {
 
 // RunNmap run nmap command and return list of port open
 func RunNmap(input string, ports string, options core.Options) []string {
-	// ports := options.Ports
+	// use nmap as overview scan
+	if options.Scan.NmapOverview {
+		ports = options.Scan.Ports
+	}
 	if ports == "" {
 		ports = "443"
 	}
@@ -90,20 +92,44 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	var result []string
 	realNmapOutput := nmapOutput + ".xml"
 	if !core.FileExists(realNmapOutput) {
+		core.ErrorF("Result not found: %v", realNmapOutput)
 		return result
 	}
-	// result := ""
-	data := core.GetFileContent(realNmapOutput)
-	rawResult := ParsingNmap(data, options)
 
-	for k, v := range rawResult {
-		if options.Scan.Flat {
-			result = append(result, fmt.Sprintf("%v:%v", k, strings.Join(v, ",")))
-		} else {
-			result = append(result, fmt.Sprintf("%v - %v", k, strings.Join(v, ",")))
-		}
+	data := core.GetFileContent(realNmapOutput)
+	result = ParseNmap(data, options)
+	return result
+}
+
+// ParseNmap parse nmap XML output
+func ParseNmap(raw string, options core.Options) []string {
+	var result []string
+	var hosts []Host
+	if strings.Count(raw, "<address") > 1 {
+		hosts = append(hosts, GetHosts(raw)...)
+	} else {
+		hosts = append(hosts, GetHost(raw))
 	}
 
+	for _, host := range hosts {
+		//spew.Dump(host)
+		if len(host.Ports) <= 0 {
+			core.ErrorF("No open port found for %v", host.IPAddress)
+			continue
+		}
+		if options.JsonOutput {
+			if data, err := jsoniter.MarshalToString(host); err == nil {
+				result = append(result, data)
+			}
+			continue
+		}
+
+		for _, port := range host.Ports {
+			info := fmt.Sprintf("%v:%v/%v/%v", host.IPAddress, port.PortID, port.Protocol, port.Service.Product)
+			//fmt.Println(info)
+			result = append(result, info)
+		}
+	}
 	return result
 }
 
@@ -125,78 +151,43 @@ func ParsingMasscan(raw string) map[string][]string {
 	return result
 }
 
-// ParsingMasscanXML parse result from masscan XML format
-func ParsingMasscanXML(raw string) map[string][]string {
-	result := make(map[string][]string)
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
-	if err != nil {
-		return result
+// RunZmap run masscan command and return list of port open
+func RunZmap(inputFile string, port string, options core.Options) []string {
+	ports := options.Scan.Ports
+	if ports == "" {
+		ports = "443"
 	}
+	zmapOutput := options.Scan.TmpOutput
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "zmap-*.txt")
+	if zmapOutput != "" {
+		tmpFile, _ = ioutil.TempFile(zmapOutput, fmt.Sprintf("zmap-%v-*.txt", core.StripPath(inputFile)))
+	}
+	zmapOutput = tmpFile.Name()
+	zmapCmd := fmt.Sprintf("sudo zmap -p %v -w %v -f 'saddr,sport' -O csv -o %v", port, inputFile, zmapOutput)
+	core.DebugF("Execute: %v", zmapCmd)
+	command := []string{
+		"bash",
+		"-c",
+		zmapCmd,
+	}
+	exec.Command(command[0], command[1:]...).CombinedOutput()
 
-	doc.Find("host").Each(func(i int, s *goquery.Selection) {
-		ip, _ := s.Find("address").First().Attr("addr")
-		port, _ := s.Find("port").First().Attr("portid")
-		result[ip] = append(result[ip], port)
-	})
-
+	result := ParseZmap(zmapOutput)
 	return result
 }
 
-// ParsingNmap parse result from nmap XML format
-func ParsingNmap(raw string, options core.Options) map[string][]string {
-	result := make(map[string][]string)
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
-	if err != nil {
+// ParseZmap parsse zmap data
+func ParseZmap(zmapOutput string) []string {
+	data := core.GetFileContent(zmapOutput)
+	var result []string
+	if strings.TrimSpace(data) == "" {
 		return result
 	}
-	doc.Find("host").Each(func(i int, h *goquery.Selection) {
-		ip, _ := h.Find("address").First().Attr("addr")
 
-		h.Find("port").Each(func(j int, s *goquery.Selection) {
-			service, _ := s.Find("service").First().Attr("name")
-			product, ok := s.Find("service").First().Attr("product")
-			if !ok {
-				product = ""
-			}
-			port, _ := s.Attr("portid")
-			info := fmt.Sprintf("%v/%v/%v", port, service, product)
-			result[ip] = append(result[ip], strings.TrimSpace(info))
-		})
+	raw := strings.Replace(data, ",", ":", -1)
+	raw = strings.Replace(raw, "saddr:sport", "", -1)
+	raw = strings.TrimSpace(raw)
 
-		if options.Scan.NmapScripts != "" {
-			h.Find("script").Each(func(j int, s *goquery.Selection) {
-				id, _ := s.Attr("id")
-				scriptOutput, _ := s.Attr("output")
-
-				if scriptOutput != "" {
-					// grep script output with grepString
-					if options.Scan.GrepString != "" {
-						var vulnerable bool
-						if strings.Contains(scriptOutput, options.Scan.GrepString) {
-							vulnerable = true
-						} else {
-							r, err := regexp.Compile(options.Scan.GrepString)
-							if err == nil {
-								matches := r.FindStringSubmatch(scriptOutput)
-								if len(matches) > 0 {
-									vulnerable = true
-								}
-							}
-						}
-						if vulnerable {
-							vul := fmt.Sprintf("/vulnerable|%v", id)
-							result[ip] = append(result[ip], strings.TrimSpace(vul))
-						}
-					}
-
-					scriptOutput = strings.Replace(scriptOutput, "\n", "\\n", -1)
-					info := fmt.Sprintf("/script|%v;;out|%v", id, scriptOutput)
-					result[ip] = append(result[ip], strings.TrimSpace(info))
-				}
-			})
-		}
-	})
-
+	result = strings.Split(raw, "\n")
 	return result
 }

@@ -20,7 +20,7 @@ func TestParsingNmap(t *testing.T) {
 	options.Scan.NmapScripts = "vulners.nse"
 	// options.Input = "103.102.128.0/24"
 	raw := core.GetFileContent("/tmp/testttt/samm.xml")
-	result := ParsingNmap(raw, options)
+	result := ParseNmap(raw, options)
 	fmt.Println(result)
 	if len(result) == 0 {
 		t.Errorf("Error RunMasscan")
@@ -30,6 +30,14 @@ func TestParsingNmap(t *testing.T) {
 func TestParseMassScan(t *testing.T) {
 	raw := core.GetFileContent("/tmp/ddemo")
 	result := ParsingMasscan(raw)
+	fmt.Println(result)
+	if len(result) == 0 {
+		t.Errorf("Error ParsingMasscan")
+	}
+}
+
+func TestParseZmap(t *testing.T) {
+	result := ParseZmap("/tmp/nn/p443")
 	fmt.Println(result)
 	if len(result) == 0 {
 		t.Errorf("Error ParsingMasscan")

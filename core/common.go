@@ -29,10 +29,9 @@ func InitLog(options *Options) {
 		logger.Error("error opening file: %v", err)
 	}
 
-	mwr := io.MultiWriter(os.Stdout, f)
+	mwr := io.MultiWriter(os.Stderr, f)
 
 	logger.SetLevel(logrus.InfoLevel)
-
 	logger = &logrus.Logger{
 		Out:   mwr,
 		Level: logrus.InfoLevel,
@@ -56,7 +55,7 @@ func InitLog(options *Options) {
 // GoodF print good message
 func GoodF(format string, args ...interface{}) {
 	good := color.HiGreenString("[+]")
-	fmt.Printf("%s %s\n", good, fmt.Sprintf(format, args...))
+	fmt.Fprintf(os.Stderr, "%s %s\n", good, fmt.Sprintf(format, args...))
 }
 
 // BannerF print info message
@@ -73,7 +72,7 @@ func InforF(format string, args ...interface{}) {
 // WarningF print good message
 func WarningF(format string, args ...interface{}) {
 	good := color.YellowString("[!]")
-	fmt.Printf("%s %s\n", good, fmt.Sprintf(format, args...))
+	fmt.Fprintf(os.Stderr, "%s %s\n", good, fmt.Sprintf(format, args...))
 }
 
 // DebugF print debug message
@@ -84,5 +83,5 @@ func DebugF(format string, args ...interface{}) {
 // ErrorF print good message
 func ErrorF(format string, args ...interface{}) {
 	good := color.RedString("[-]")
-	fmt.Printf("%s %s\n", good, fmt.Sprintf(format, args...))
+	fmt.Fprintf(os.Stderr, "%s %s\n", good, fmt.Sprintf(format, args...))
 }

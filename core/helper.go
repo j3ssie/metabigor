@@ -303,3 +303,46 @@ func URLEncode(raw string) string {
 	decodedValue := url.QueryEscape(raw)
 	return decodedValue
 }
+
+// GenPorts gen list of ports based on input
+func GenPorts(raw string) []string {
+	var ports []string
+	if strings.Contains(raw, ",") {
+		items := strings.Split(raw, ",")
+		for _, item := range items {
+			if strings.Contains(item, "-") {
+				min, err := strconv.Atoi(strings.Split(item, "-")[0])
+				if err != nil {
+					continue
+				}
+				max, err := strconv.Atoi(strings.Split(item, "-")[1])
+				if err != nil {
+					continue
+				}
+				for i := min; i <= max; i++ {
+					ports = append(ports, fmt.Sprintf("%v", i))
+				}
+			} else {
+				ports = append(ports, item)
+			}
+		}
+	} else {
+		if strings.Contains(raw, "-") {
+			min, err := strconv.Atoi(strings.Split(raw, "-")[0])
+			if err != nil {
+				return ports
+			}
+			max, err := strconv.Atoi(strings.Split(raw, "-")[1])
+			if err != nil {
+				return ports
+			}
+			for i := min; i <= max; i++ {
+				ports = append(ports, fmt.Sprintf("%v", i))
+			}
+		} else {
+			ports = append(ports, raw)
+		}
+	}
+
+	return ports
+}
