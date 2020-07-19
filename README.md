@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/2303/2303030.svg" height="140" />
+  <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/1789/1789851.svg" height="140" />
   <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
     <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/github/v/release/j3ssie/metabigor.svg"></a>
@@ -37,11 +37,15 @@ echo "company" | metabigor net --org -o /tmp/result.txt
 echo "ASN1111" | metabigor net --asn -o /tmp/result.txt
 cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
 
-# running masscan on port 443 for a subnet
-echo "1.2.3.4/24" | metabigor scan -p 443 -o /tmp/result.txt
+# Only run masscan full ports
+echo '1.2.3.4/24' | metabigor scan -o result.txt
 
-# running masscan on all port and nmap on open port
-cat list_of_IPs | metabigor scan --detail -o /tmp/result.txt
+# Only run nmap detail scan
+echo '1.2.3.4:21' | metabigor scan -s -c 10
+echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
+
+# Only run scan with zmap
+cat ranges.txt | metabigor scan -p '443,80' -z
 
 # search result on fofa
 echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
@@ -52,8 +56,7 @@ echo '1.2.3.4' | metabigor ip -s 'shodan' -v
 
 ## Credits
 
-Logo from [flaticon](https://www.flaticon.com/free-icon/wifi_2303030) by [freepik
-](https://www.flaticon.com/authors/freepik)
+Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg) by [freepik](https://www.flaticon.com/authors/freepik)
 
 ## Disclaimer
 

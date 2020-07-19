@@ -11,11 +11,6 @@ import (
 )
 
 var options = core.Options{}
-var config struct {
-	defaultSign  string
-	secretCollab string
-	port         string
-}
 
 var RootCmd = &cobra.Command{
 	Use:   "metabigor",

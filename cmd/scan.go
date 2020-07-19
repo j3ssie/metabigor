@@ -76,7 +76,7 @@ func runScan(cmd *cobra.Command, _ []string) error {
 		inputFile := StoreTmpInput(inputs, options)
 		ports := core.GenPorts(options.Scan.Ports)
 		core.DebugF("Store temp input in: %v", inputFile)
-		core.DebugF("Run port scan with: %v", ports)
+		core.DebugF("Run port scan with: %v", strings.Trim(strings.Join(ports, ","), ","))
 		if inputFile == "" || len(ports) == 0 {
 			core.ErrorF("Error gen input or ports")
 			return nil

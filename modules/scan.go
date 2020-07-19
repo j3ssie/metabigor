@@ -2,10 +2,12 @@ package modules
 
 import (
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"os/exec"
+	"path/filepath"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/j3ssie/metabigor/core"
 )
@@ -158,9 +160,9 @@ func RunZmap(inputFile string, port string, options core.Options) []string {
 		ports = "443"
 	}
 	zmapOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "zmap-*.txt")
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "out-*.txt")
 	if zmapOutput != "" {
-		tmpFile, _ = ioutil.TempFile(zmapOutput, fmt.Sprintf("zmap-%v-*.txt", core.StripPath(inputFile)))
+		tmpFile, _ = ioutil.TempFile(zmapOutput, fmt.Sprintf("out-%v-*.txt", core.StripPath(filepath.Base(inputFile))))
 	}
 	zmapOutput = tmpFile.Name()
 	zmapCmd := fmt.Sprintf("sudo zmap -p %v -w %v -f 'saddr,sport' -O csv -o %v", port, inputFile, zmapOutput)
