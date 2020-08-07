@@ -25,6 +25,7 @@ type Options struct {
 type ScanOptions struct {
 	Ports        string
 	Rate         string
+	NmapTemplate string
 	NmapOverview bool
 	ZmapOverview bool
 	Detail       bool

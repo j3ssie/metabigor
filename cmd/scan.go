@@ -27,9 +27,10 @@ func init() {
 	scanCmd.Flags().BoolP("flat", "f", true, "format output like this: 1.2.3.4:443")
 	scanCmd.Flags().BoolP("nmap", "n", false, "Use nmap instead of masscan for overview scan")
 	scanCmd.Flags().BoolP("zmap", "z", false, "Only scan range with zmap")
-
 	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
+
 	scanCmd.Flags().StringP("script", "S", "", "nmap scripts")
+	scanCmd.Flags().String("nmap-command",  "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
 	scanCmd.Flags().StringP("grep", "g", "", "match string to confirm script success")
 	// only parse scan
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
@@ -39,6 +40,7 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, _ []string) error {
+	options.Scan.NmapTemplate, _ = cmd.Flags().GetString("nmap-command")
 	options.Scan.NmapScripts, _ = cmd.Flags().GetString("script")
 	options.Scan.GrepString, _ = cmd.Flags().GetString("grep")
 	options.Scan.Ports, _ = cmd.Flags().GetString("ports")

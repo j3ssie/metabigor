@@ -1,11 +1,13 @@
 package modules
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -65,6 +67,9 @@ func RunMasscan(input string, options core.Options) []string {
 	return realResult
 }
 
+type nmap struct {
+}
+
 // RunNmap run nmap command and return list of port open
 func RunNmap(input string, ports string, options core.Options) []string {
 	// use nmap as overview scan
@@ -80,10 +85,24 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		tmpFile, _ = ioutil.TempFile(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
 	}
 	nmapOutput = tmpFile.Name()
-	nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
+
+	// build nmap command
+	nmapCommand := make(map[string]string)
+	nmapCommand["output"] = nmapOutput
+	nmapCommand["ports"] = ports
+	nmapCommand["input"] = input
 	if options.Scan.NmapScripts != "" {
-		nmapCmd = fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open --script %v -oA %v", ports, input, options.Scan.NmapScripts, nmapOutput)
+		nmapCommand["script"] = fmt.Sprintf("--script %v", options.Scan.NmapScripts)
+	} else {
+		nmapCommand["script"] = ""
 	}
+	nmapCmd := ResolveData(options.Scan.NmapTemplate, nmapCommand)
+	//
+	//nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
+	//if options.Scan.NmapScripts != "" {
+	//	nmapCmd = fmt.Sprintf("sudo nmap -sSV -p %v %v --script %v -T4 --open -oA %v", ports, input, options.Scan.NmapScripts, nmapOutput)
+	//}
+
 	core.DebugF("Execute: %v", nmapCmd)
 	command := []string{
 		"bash",
@@ -192,4 +211,15 @@ func ParseZmap(zmapOutput string) []string {
 
 	result = strings.Split(raw, "\n")
 	return result
+}
+
+// ResolveData resolve template from signature file
+func ResolveData(format string, data map[string]string) string {
+	t := template.Must(template.New("").Parse(format))
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, data)
+	if err != nil {
+		return format
+	}
+	return buf.String()
 }

@@ -179,6 +179,51 @@ func ParseShodan(content string) map[string]string {
 	return info
 }
 
+// SecurityTrails get IPInfo from https://securitytrails.com/list/ip/196.3.50.77
+func SecurityTrails(query string, options core.Options) []string {
+	url := fmt.Sprintf(`https://securitytrails.com/list/ip/%v`, query)
+	var result []string
+	core.InforF("Get data from: %v", url)
+	content := core.RequestWithChrome(url,"root" ,options.Timeout)
+	if content == "" {
+		core.DebugF("Error in sending to SecurityTrails")
+		return result
+	}
+	datas := ParseSecurityTrails(content)
+	for key, value := range datas {
+		result = append(result, fmt.Sprintf("[securitytrails] %v %v|%v", query, key, value))
+	}
+	return result
+}
+
+// ParseSecurityTrails parsing data from Onyphe
+func ParseSecurityTrails(content string) []map[string]string {
+	var result []map[string]string
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
+	if err != nil {
+		core.DebugF("Error parsing HTML")
+		return result
+	}
+
+	// searching for data
+	doc.Find("table").Each(func(i int, s *goquery.Selection) {
+		info := make(map[string]string)
+		//text := s.Text()
+		// basic info part
+		s.Find("tr").Each(func(i int, tr *goquery.Selection) {
+			text := tr.Text()
+			if len(text) > 2 && !strings.Contains(text, "www") && !strings.Contains(text, "apex_domain") {
+				info["data"] = text[1:]
+				return
+			}
+
+		})
+		result = append(result, info)
+	})
+
+	return result
+}
+
 // CertsInfo get cert info
 func CertsInfo(query string, rports string) string {
 	var certs cert.Certs

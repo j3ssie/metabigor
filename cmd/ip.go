@@ -85,7 +85,7 @@ func runIPSingle(input string, options core.Options) []string {
 	var data []string
 	core.BannerF(fmt.Sprintf("Search on %v for: ", options.Search.Source), input)
 	if options.Search.Source == "all" {
-		options.Search.Source = "ony,shodan"
+		options.Search.Source = "ony,shodan,trails"
 	}
 	options.Search.Query = input
 
@@ -97,6 +97,10 @@ func runIPSingle(input string, options core.Options) []string {
 	if strings.Contains(options.Search.Source, "sho") {
 		data = append(data, modules.Shodan(options.Search.Query, options)...)
 	}
+	//
+	//if strings.Contains(options.Search.Source, "trail") || strings.Contains(options.Search.Source, "sec") {
+	//	data = append(data, modules.SecurityTrails(options.Search.Query, options)...)
+	//}
 
 	return data
 }
