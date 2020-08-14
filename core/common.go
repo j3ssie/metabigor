@@ -23,7 +23,7 @@ func InitLog(options *Options) {
 	if !FolderExists(options.Scan.TmpOutput) {
 		os.MkdirAll(options.Scan.TmpOutput, 0755)
 	}
-	options.LogFile = path.Join(options.Scan.TmpOutput, "metabigor.log")
+	options.LogFile = path.Join(options.Scan.TmpOutput, fmt.Sprintf("metabigor-%s.log", GetTS()))
 	f, err := os.OpenFile(options.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Error("error opening file: %v", err)

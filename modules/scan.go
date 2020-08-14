@@ -30,6 +30,10 @@ func RunMasscan(input string, options core.Options) []string {
 	massOutput = tmpFile.Name()
 
 	masscanCmd := fmt.Sprintf("sudo masscan --rate %v -p %v -oG %v %v", rate, ports, massOutput, input)
+	if options.Scan.All {
+		masscanCmd = fmt.Sprintf("sudo masscan --rate %v -p %v -oG %v -iL %v", rate, ports, massOutput, input)
+	}
+
 	core.DebugF("Execute: %v", masscanCmd)
 	command := []string{
 		"bash",

@@ -21,8 +21,9 @@ func init() {
 	}
 
 	scanCmd.Flags().StringP("ports", "p", "0-65535", "Port range for previous command")
-	scanCmd.Flags().StringP("rate", "r", "5000", "rate limit for masscan command")
+	scanCmd.Flags().StringP("rate", "r", "3000", "rate limit for masscan command")
 	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
+	scanCmd.Flags().BoolP("all", "A", false, "Join all inputs to a file first")
 
 	scanCmd.Flags().BoolP("flat", "f", true, "format output like this: 1.2.3.4:443")
 	scanCmd.Flags().BoolP("nmap", "n", false, "Use nmap instead of masscan for overview scan")
@@ -30,7 +31,7 @@ func init() {
 	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
 
 	scanCmd.Flags().StringP("script", "S", "", "nmap scripts")
-	scanCmd.Flags().String("nmap-command",  "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
+	scanCmd.Flags().String("nmap-command", "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
 	scanCmd.Flags().StringP("grep", "g", "", "match string to confirm script success")
 	// only parse scan
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
@@ -47,6 +48,7 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	options.Scan.Rate, _ = cmd.Flags().GetString("rate")
 	options.Scan.Detail, _ = cmd.Flags().GetBool("detail")
 	options.Scan.Flat, _ = cmd.Flags().GetBool("flat")
+	options.Scan.All, _ = cmd.Flags().GetBool("all")
 	options.Scan.NmapOverview, _ = cmd.Flags().GetBool("nmap")
 	options.Scan.ZmapOverview, _ = cmd.Flags().GetBool("zmap")
 	options.Scan.SkipOverview, _ = cmd.Flags().GetBool("skip-masscan")
@@ -74,33 +76,45 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	var wg sync.WaitGroup
 	jobs := make(chan string)
 
-	if options.Scan.ZmapOverview {
-		inputFile := StoreTmpInput(inputs, options)
-		ports := core.GenPorts(options.Scan.Ports)
-		core.DebugF("Store temp input in: %v", inputFile)
-		core.DebugF("Run port scan with: %v", strings.Trim(strings.Join(ports, ","), ","))
-		if inputFile == "" || len(ports) == 0 {
-			core.ErrorF("Error gen input or ports")
+	if options.Scan.All || options.Scan.ZmapOverview {
+		options.Scan.InputFile = StoreTmpInput(inputs, options)
+		core.DebugF("Store temp input in: %v", options.Scan.InputFile)
+
+		if options.Scan.ZmapOverview {
+			ports := core.GenPorts(options.Scan.Ports)
+			core.DebugF("Run port scan with: %v", strings.Trim(strings.Join(ports, ","), ","))
+			if options.Scan.InputFile == "" || len(ports) == 0 {
+				core.ErrorF("Error gen input or ports")
+				return nil
+			}
+			for i := 0; i < options.Concurrency; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					for job := range jobs {
+						// do real stuff here
+						core.BannerF("Run zmap scan on port ", job)
+						result = modules.RunZmap(options.Scan.InputFile, job, options)
+						StoreData(result, options)
+					}
+				}()
+			}
+			for _, port := range ports {
+				jobs <- port
+			}
+			close(jobs)
+			wg.Wait()
 			return nil
 		}
-		for i := 0; i < options.Concurrency; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for job := range jobs {
-					// do real stuff here
-					core.BannerF("Run zmap scan on port ", job)
-					result = modules.RunZmap(inputFile, job, options)
-					StoreData(result, options)
-				}
-			}()
+
+		core.BannerF("Run overview scan on port ", options.Scan.InputFile)
+		if options.Scan.NmapOverview {
+			result = modules.RunNmap(options.Scan.InputFile, "", options)
+		} else {
+			result = modules.RunMasscan(options.Scan.InputFile, options)
 		}
-		for _, port := range ports {
-			jobs <- port
-		}
-		close(jobs)
-		wg.Wait()
 		return nil
+
 	}
 
 	for i := 0; i < options.Concurrency; i++ {
@@ -130,9 +144,8 @@ func runScan(cmd *cobra.Command, _ []string) error {
 }
 
 func runRoutine(input string, options core.Options) []string {
-	core.BannerF("Run overview scan on: ", input)
 	var data []string
-
+	core.BannerF("Run overview scan on: ", input)
 	if options.Scan.NmapOverview {
 		data = append(data, modules.RunNmap(input, "", options)...)
 	} else {
