@@ -184,7 +184,7 @@ func SecurityTrails(query string, options core.Options) []string {
 	url := fmt.Sprintf(`https://securitytrails.com/list/ip/%v`, query)
 	var result []string
 	core.InforF("Get data from: %v", url)
-	content := core.RequestWithChrome(url,"root" ,options.Timeout)
+	content := core.RequestWithChrome(url, "root", options.Timeout)
 	if content == "" {
 		core.DebugF("Error in sending to SecurityTrails")
 		return result

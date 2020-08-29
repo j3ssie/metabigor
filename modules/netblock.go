@@ -3,6 +3,7 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,6 +18,14 @@ func getAsnNum(raw string) string {
 	return raw
 }
 
+// RangeInfo infor about range IP
+type RangeInfo struct {
+	Cidr    string `json:"cidr"`
+	Desc    string `json:"desc"`
+	Asn     string `json:"asn"`
+	Country string `json:"country"`
+}
+
 // IPInfo get CIDR from ASN
 func IPInfo(options core.Options) []string {
 	asn := getAsnNum(options.Net.Asn)
@@ -28,6 +37,18 @@ func IPInfo(options core.Options) []string {
 	if err != nil {
 		return result
 	}
+
+	var country string
+	doc.Find(".flag").Each(func(i int, s *goquery.Selection) {
+		href, ok := s.Attr("href")
+		if ok {
+			if strings.HasPrefix(href, "/countries/") {
+				country = s.Text()
+				return
+			}
+		}
+	})
+
 	// searching for data
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		s.Find("address").First()
@@ -35,9 +56,25 @@ func IPInfo(options core.Options) []string {
 			data := strings.Split(strings.TrimSpace(s.Text()), "  ")
 			cidr := strings.TrimSpace(data[0])
 			desc := strings.TrimSpace(data[len(data)-1])
+			if len(data) > 2 {
+				desc = strings.TrimSpace(data[1])
+			}
 
-			core.InforF(fmt.Sprintf("%s - %s", cidr, desc))
-			result = append(result, fmt.Sprintf("%s", cidr))
+			if options.JsonOutput {
+				output := RangeInfo{
+					Cidr:    cidr,
+					Desc:    desc,
+					Asn:     asn,
+					Country: country,
+				}
+				if out, err := jsoniter.MarshalToString(output); err == nil {
+					core.InforF(out)
+					result = append(result, out)
+				}
+			} else {
+				core.InforF(fmt.Sprintf("%s - %s", cidr, desc))
+				result = append(result, fmt.Sprintf("%s", cidr))
+			}
 		}
 	})
 	return result

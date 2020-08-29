@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/thoas/go-funk"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -19,41 +20,32 @@ func init() {
 		Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 		RunE:  runScan,
 	}
-
-	scanCmd.Flags().StringP("ports", "p", "0-65535", "Port range for previous command")
-	scanCmd.Flags().StringP("rate", "r", "3000", "rate limit for masscan command")
-	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
-	scanCmd.Flags().BoolP("all", "A", false, "Join all inputs to a file first")
-
-	scanCmd.Flags().BoolP("flat", "f", true, "format output like this: 1.2.3.4:443")
-	scanCmd.Flags().BoolP("nmap", "n", false, "Use nmap instead of masscan for overview scan")
-	scanCmd.Flags().BoolP("zmap", "z", false, "Only scan range with zmap")
-	scanCmd.Flags().BoolP("skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
-
-	scanCmd.Flags().StringP("script", "S", "", "nmap scripts")
-	scanCmd.Flags().String("nmap-command", "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
-	scanCmd.Flags().StringP("grep", "g", "", "match string to confirm script success")
-	// only parse scan
+	// scan options
+	scanCmd.Flags().StringVarP(&options.Scan.Ports, "ports", "p", "0-65535", "Port range for previous command")
+	scanCmd.Flags().StringVarP(&options.Scan.Rate, "rate", "r", "3000", "rate limit for masscan command")
+	scanCmd.Flags().BoolVarP(&options.Scan.All, "join", "A", false, "Join all inputs to a file first then do a scan")
+	// scan strategy option
+	scanCmd.Flags().BoolVarP(&options.Scan.Flat, "flat", "f", true, "format output like this: 1.2.3.4:443")
+	scanCmd.Flags().BoolVarP(&options.Scan.NmapOverview, "nmap", "n", false, "Use nmap instead of masscan for overview scan")
+	scanCmd.Flags().BoolVarP(&options.Scan.ZmapOverview, "zmap", "z", false, "Only scan range with zmap")
+	scanCmd.Flags().BoolVarP(&options.Scan.SkipOverview, "skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
+	// more nmap options
+	scanCmd.Flags().StringVarP(&options.Scan.NmapScripts, "script", "S", "", "nmap scripts")
+	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
+	scanCmd.Flags().StringVar(&options.Scan.GrepString, "grep", "", "match string to confirm script success")
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
+	scanCmd.Flags().BoolVar(&options.Scan.IPv4, "4", true, "Filter input to only get ipv4")
+	//scanCmd.Flags().Bool("6",  false, "Filter input to only get ipv4")
+	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
+	scanCmd.Flags().Bool("uniq", true, "Unique input first")
 	scanCmd.SetHelpFunc(ScanHelp)
 	RootCmd.AddCommand(scanCmd)
-
 }
 
 func runScan(cmd *cobra.Command, _ []string) error {
-	options.Scan.NmapTemplate, _ = cmd.Flags().GetString("nmap-command")
-	options.Scan.NmapScripts, _ = cmd.Flags().GetString("script")
-	options.Scan.GrepString, _ = cmd.Flags().GetString("grep")
-	options.Scan.Ports, _ = cmd.Flags().GetString("ports")
-	options.Scan.Rate, _ = cmd.Flags().GetString("rate")
-	options.Scan.Detail, _ = cmd.Flags().GetBool("detail")
-	options.Scan.Flat, _ = cmd.Flags().GetBool("flat")
-	options.Scan.All, _ = cmd.Flags().GetBool("all")
-	options.Scan.NmapOverview, _ = cmd.Flags().GetBool("nmap")
-	options.Scan.ZmapOverview, _ = cmd.Flags().GetBool("zmap")
-	options.Scan.SkipOverview, _ = cmd.Flags().GetBool("skip-masscan")
 	// only parse result
 	resultFolder, _ := cmd.Flags().GetString("result-folder")
+	uniq, _ := cmd.Flags().GetBool("uniq")
 	if resultFolder != "" {
 		parseResult(resultFolder, options)
 		os.Exit(0)
@@ -71,8 +63,15 @@ func runScan(cmd *cobra.Command, _ []string) error {
 		inputs = append(inputs, options.Input)
 	}
 
+	// make sure input is valid
+	if options.Scan.IPv4 {
+		inputs = core.FilterIpv4(inputs)
+	}
+	if uniq {
+		inputs = funk.UniqString(inputs)
+	}
+
 	var result []string
-	// var detailResult []string
 	var wg sync.WaitGroup
 	jobs := make(chan string)
 

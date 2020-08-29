@@ -30,12 +30,14 @@ type ScanOptions struct {
 	ZmapOverview bool
 	Detail       bool
 	Flat         bool
-	All         bool
+	All          bool
+	IPv4         bool
+	IPv6         bool
 	SkipOverview bool
 	TmpOutput    string
 	NmapScripts  string
 	GrepString   string
-	InputFile   string
+	InputFile    string
 }
 
 // NetOptions options for net command
