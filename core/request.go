@@ -22,18 +22,18 @@ func SendGET(url string, options Options) string {
 		"Accept":     "*/*",
 		"AcceptLang": "en-US,en;q=0.8",
 	}
-	resp, _ := JustSend(options, "GET", url, headers)
+	resp, _ := JustSend(options, "GET", url, headers, "")
 	return resp.Body
 }
 
 // SendPOST just send POST request
 func SendPOST(url string, options Options) string {
-	resp, _ := JustSend(options, "POST", url, headers)
+	resp, _ := JustSend(options, "POST", url, headers, "")
 	return resp.Body
 }
 
 // JustSend just sending request
-func JustSend(options Options, method string, url string, headers map[string]string) (res Response, err error) {
+func JustSend(options Options, method string, url string, headers map[string]string, body string) (res Response, err error) {
 	timeout := options.Timeout
 
 	// disable log when retry
@@ -76,7 +76,8 @@ func JustSend(options Options, method string, url string, headers map[string]str
 		break
 	case "post":
 		resp, err = client.R().
-			Get(url)
+			SetBody([]byte(body)).
+			Post(url)
 		break
 	}
 

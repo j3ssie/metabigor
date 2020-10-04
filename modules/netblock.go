@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"net"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -251,5 +252,32 @@ func ASNLookup(options core.Options) []string {
 	for _, item := range result {
 		core.InforF(item)
 	}
+	return result
+}
+
+// ASNFromIP get ip or domain from ultratools.com
+func ASNFromIP(options core.Options) []string {
+	var result []string
+	ip := options.Net.IP
+	// resolve IP
+	if ip == "" && options.Net.Domain != "" {
+		if resolved, err := net.LookupHost(options.Net.Domain); err == nil {
+			ip = resolved[0]
+		}
+	}
+	url := fmt.Sprintf(`https://www.ultratools.com/tools/asnInfoResult?domainName=%v`, ip)
+	core.InforF("Get data from: %v", url)
+	content := core.SendGET(url, options)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
+	if err != nil {
+		return result
+	}
+
+	// searching for data
+	asn := doc.Find(".tool-results-heading").Text()
+	if asn != "" {
+		result = append(result, strings.TrimSpace(asn))
+	}
+
 	return result
 }

@@ -109,7 +109,7 @@ func OptimizeFofaQuery(options core.Options) []string {
 		"AcceptLang":       "en-US,en;q=0.8",
 		"X-Requested-With": "XMLHttpRequest",
 	}
-	res, _ := core.JustSend(options, "GET", url, headers)
+	res, _ := core.JustSend(options, "GET", url, headers, "")
 	content := res.Body
 
 	var result []string

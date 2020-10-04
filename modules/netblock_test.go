@@ -59,3 +59,14 @@ func TestASNLookup(t *testing.T) {
 		t.Errorf("Error ASNLookup")
 	}
 }
+
+
+func TestASNFromIP(t *testing.T) {
+	var options core.Options
+	options.Net.IP = "168.120.1.1"
+	result := ASNFromIP(options)
+	if len(result) == 0 {
+		t.Errorf("Error ASNLookup")
+	}
+}
+

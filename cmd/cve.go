@@ -12,23 +12,21 @@ import (
 )
 
 func init() {
-	var ipCmd = &cobra.Command{
-		Use:   "ip",
-		Short: "IP OSINT Search",
+	var cveCmd = &cobra.Command{
+		Use:   "cve",
+		Short: "CVE or Advisory Search",
 		Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
-		RunE:  runIP,
+		RunE:  runCVE,
 	}
 
-	ipCmd.Flags().StringP("source", "s", "all", "Search Engine Select")
-	ipCmd.Flags().StringSliceP("query", "q", []string{}, "Query to search (Multiple -q flags are accepted)")
-	RootCmd.AddCommand(ipCmd)
+	cveCmd.Flags().StringP("source", "s", "all", "Search Engine Select")
+	cveCmd.Flags().StringSliceP("query", "q", []string{}, "Query to search (Multiple -q flags are accepted)")
+	RootCmd.AddCommand(cveCmd)
 }
 
-func runIP(cmd *cobra.Command, _ []string) error {
+func runCVE(cmd *cobra.Command, _ []string) error {
 	options.Search.Source, _ = cmd.Flags().GetString("source")
 	options.Search.Source = strings.ToLower(options.Search.Source)
-	options.Search.More, _ = cmd.Flags().GetBool("brute")
-	options.Search.Optimize, _ = cmd.Flags().GetBool("optimize")
 	queries, _ := cmd.Flags().GetStringSlice("query")
 
 	var inputs []string
@@ -47,9 +45,6 @@ func runIP(cmd *cobra.Command, _ []string) error {
 		os.Exit(1)
 	}
 
-	if options.Search.More {
-		inputs = addMoreQuery(inputs, options)
-	}
 
 	var wg sync.WaitGroup
 	jobs := make(chan string)
@@ -60,7 +55,7 @@ func runIP(cmd *cobra.Command, _ []string) error {
 			defer wg.Done()
 			// do real stuff here
 			for job := range jobs {
-				searchResult := runIPSingle(job, options)
+				searchResult := runCVESingle(job, options)
 				StoreData(searchResult, options)
 			}
 		}()
@@ -81,22 +76,17 @@ func runIP(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func runIPSingle(input string, options core.Options) []string {
+func runCVESingle(input string, options core.Options) []string {
 	var data []string
 	core.BannerF(fmt.Sprintf("Search on %v for: ", options.Search.Source), input)
 	if options.Search.Source == "all" {
-		options.Search.Source = "ony,shodan,trails"
+		options.Search.Source = "vulners"
 	}
 	options.Search.Query = input
 
 	// select source
-	if strings.Contains(options.Search.Source, "ony") {
-		data = append(data, modules.Onyphe(options.Search.Query, options)...)
+	if strings.Contains(options.Search.Source, "vulner") {
+		data = append(data, modules.Vulners(options)...)
 	}
-
-	if strings.Contains(options.Search.Source, "sho") {
-		data = append(data, modules.Shodan(options.Search.Query, options)...)
-	}
-
 	return data
 }

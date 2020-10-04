@@ -22,6 +22,8 @@ func init() {
 
 	netCmd.Flags().Bool("asn", false, "Take input as ASN")
 	netCmd.Flags().Bool("org", false, "Take input as Organization")
+	netCmd.Flags().Bool("ip", false, "Take input as a single IP address")
+	netCmd.Flags().Bool("domain", false, "Take input as a domain")
 	netCmd.Flags().BoolP("accurate", "x", false, "Only get from highly trusted source")
 
 	RootCmd.AddCommand(netCmd)
@@ -30,6 +32,8 @@ func init() {
 func runNet(cmd *cobra.Command, _ []string) error {
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
+	ip, _ := cmd.Flags().GetBool("ip")
+	domain, _ := cmd.Flags().GetBool("domain")
 	options.Net.Optimize, _ = cmd.Flags().GetBool("accurate")
 
 	var inputs []string
@@ -59,6 +63,12 @@ func runNet(cmd *cobra.Command, _ []string) error {
 					osintResult = runASN(job, options)
 				} else if org {
 					osintResult = runOrg(job, options)
+				} else if ip {
+					options.Net.IP = job
+					osintResult = runSingle(job, options)
+				} else if domain {
+					options.Net.Domain = job
+					osintResult = runSingle(job, options)
 				}
 				StoreData(osintResult, options)
 			}
@@ -76,6 +86,20 @@ func runNet(cmd *cobra.Command, _ []string) error {
 		core.ErrorF("No data found")
 	}
 	return nil
+}
+
+func runSingle(input string, options core.Options) []string {
+	core.BannerF("Starting get ASN from: ", input)
+	var data []string
+	ans := modules.ASNFromIP(options)
+
+	// get more IP by result ASN
+	for _, item := range ans {
+		if strings.HasPrefix(strings.ToLower(item), "as") {
+			data = append(data, runASN(item, options)...)
+		}
+	}
+	return data
 }
 
 func runASN(input string, options core.Options) []string {

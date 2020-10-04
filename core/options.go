@@ -19,6 +19,7 @@ type Options struct {
 	Scan        ScanOptions
 	Net         NetOptions
 	Search      SearchOptions
+	CVE      CVEOptions
 }
 
 // ScanOptions options for net command
@@ -44,6 +45,8 @@ type ScanOptions struct {
 type NetOptions struct {
 	Asn      string
 	Org      string
+	IP      string
+	Domain      string
 	Optimize bool
 }
 
@@ -53,6 +56,13 @@ type SearchOptions struct {
 	Query    string
 	Optimize bool
 	More     bool
+}
+
+
+// CVEOptions options for cve command
+type CVEOptions struct {
+	Software   string
+	Version    string
 }
 
 // Request all information about request
