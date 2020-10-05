@@ -8,6 +8,14 @@ import (
 	"strings"
 )
 
+/*
+@TODO: more source to add
+https://snyk.io/vuln/
+https://www.tenable.com/plugins/nessus/
+https://github.com/advisories
+https://packetstormsecurity.com/files/tags/exploit/
+*/
+
 type CVEData struct {
 	CVE   string
 	Title string

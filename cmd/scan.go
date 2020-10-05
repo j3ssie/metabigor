@@ -65,10 +65,17 @@ func runScan(cmd *cobra.Command, _ []string) error {
 
 	// make sure input is valid
 	if options.Scan.IPv4 {
-		inputs = core.FilterIpv4(inputs)
+		// only filter when run zmap
+		if !options.Scan.SkipOverview {
+			inputs = core.FilterIpv4(inputs)
+		}
 	}
 	if uniq {
 		inputs = funk.UniqString(inputs)
+	}
+	if len(inputs) == 0 {
+		core.ErrorF("No input provided")
+		os.Exit(1)
 	}
 
 	var result []string
