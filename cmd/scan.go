@@ -119,6 +119,7 @@ func runScan(cmd *cobra.Command, _ []string) error {
 		} else {
 			result = modules.RunMasscan(options.Scan.InputFile, options)
 		}
+		StoreData(result, options)
 		return nil
 
 	}
@@ -237,7 +238,7 @@ func parseResult(resultFolder string, options core.Options) {
 	for _, file := range Files {
 		filename := file.Name()
 		core.DebugF("Reading: %v", filename)
-		if strings.HasSuffix(file.Name(), "xml") && strings.HasPrefix(filename, "masscan") {
+		if strings.HasPrefix(filename, "masscan") {
 			data := core.GetFileContent(filename)
 			fmt.Println(data)
 			rawResult := modules.ParsingMasscan(data)
@@ -254,9 +255,9 @@ func parseResult(resultFolder string, options core.Options) {
 // StoreTmpInput store list of string to tmp file
 func StoreTmpInput(raw []string, options core.Options) string {
 	tmpDest := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "zmap-*.txt")
+	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "joined-*.txt")
 	if tmpDest != "" {
-		tmpFile, _ = ioutil.TempFile(tmpDest, "zmap-input-*.txt")
+		tmpFile, _ = ioutil.TempFile(tmpDest, "joined-input-*.txt")
 	}
 	tmpDest = tmpFile.Name()
 	core.WriteToFile(tmpDest, strings.Join(raw, "\n"))

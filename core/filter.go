@@ -15,7 +15,6 @@ func FilterIpv4(raw []string) []string {
 	return result
 }
 
-
 // FilterIpv6 only get Ipv6
 func FilterIpv6(raw []string) []string {
 	var result []string
@@ -28,4 +27,3 @@ func FilterIpv6(raw []string) []string {
 	}
 	return result
 }
-

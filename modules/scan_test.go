@@ -28,7 +28,7 @@ func TestParsingNmap(t *testing.T) {
 }
 
 func TestParseMassScan(t *testing.T) {
-	raw := core.GetFileContent("/tmp/ddemo")
+	raw := core.GetFileContent("/tmp/mtt/mrp")
 	result := ParsingMasscan(raw)
 	fmt.Println(result)
 	if len(result) == 0 {

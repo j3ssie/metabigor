@@ -82,6 +82,5 @@ func DebugF(format string, args ...interface{}) {
 
 // ErrorF print good message
 func ErrorF(format string, args ...interface{}) {
-	good := color.RedString("ERROR")
-	fmt.Fprintf(os.Stderr, "%s %s\n", good, fmt.Sprintf(format, args...))
+	logger.Error(fmt.Sprintf(format, args...))
 }

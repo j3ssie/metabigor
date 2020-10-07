@@ -172,11 +172,14 @@ func runOrg(input string, options core.Options) []string {
 
 // StoreData store data to output
 func StoreData(data []string, options core.Options) {
-	if len(data) > 0 {
-		fmt.Println(strings.Join(data, "\n"))
-		_, err := core.AppendToContent(options.Output, strings.Join(data, "\n"))
-		if err == nil {
-			core.InforF("Write output to: %v", options.Output)
-		}
+	if len(data) == 0 {
+		core.ErrorF("Empty data to write")
+		return
+	}
+
+	fmt.Println(strings.Join(data, "\n"))
+	_, err := core.AppendToContent(options.Output, strings.Join(data, "\n"))
+	if err == nil {
+		core.InforF("Write output to: %v", options.Output)
 	}
 }

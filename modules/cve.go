@@ -17,11 +17,11 @@ https://packetstormsecurity.com/files/tags/exploit/
 */
 
 type CVEData struct {
-	CVE   string
-	Title string
-	Desc  string
-	Raw   string
-	RawQuery   string
+	CVE      string
+	Title    string
+	Desc     string
+	Raw      string
+	RawQuery string
 }
 
 // Vulners get Org CIDR from asnlookup

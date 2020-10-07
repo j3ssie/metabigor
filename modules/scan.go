@@ -45,33 +45,37 @@ func RunMasscan(input string, options core.Options) []string {
 	var realResult []string
 	result := make(map[string]string)
 	if !core.FileExists(massOutput) {
+		core.ErrorF("Output not found: %v", massOutput)
 		return realResult
 	}
+	core.InforF("Parsing result from: %v", massOutput)
 	data := core.GetFileContent(massOutput)
 	rawResult := ParsingMasscan(data)
+
+	if len(rawResult) == 0 {
+		core.ErrorF("Output not found: %v", massOutput)
+	}
+
 	// get flat output for easily parse to other tools
 	if options.Scan.Flat {
 		for k, v := range rawResult {
 			for _, port := range v {
-				realResult = append(realResult, fmt.Sprintf("%v:%v", k, port))
+				info := fmt.Sprintf("%v:%v", k, port)
+				realResult = append(realResult, info)
 			}
 		}
 		return realResult
 	}
 
-	// group them by host
+	// group them by host in verbose mode
 	for k, v := range rawResult {
 		result[k] += fmt.Sprintf("%v", strings.Join(v, ","))
 	}
-
 	for k, v := range result {
 		realResult = append(realResult, fmt.Sprintf("%v - %v", k, v))
 	}
 
 	return realResult
-}
-
-type nmap struct {
 }
 
 // RunNmap run nmap command and return list of port open
@@ -162,6 +166,10 @@ func ParseNmap(raw string, options core.Options) []string {
 func ParsingMasscan(raw string) map[string][]string {
 	result := make(map[string][]string)
 	data := strings.Split(raw, "\n")
+	if len(data) == 0 {
+		core.ErrorF("Invalid Masscan data")
+		return result
+	}
 
 	for _, line := range data {
 		if !strings.Contains(line, "Host: ") {

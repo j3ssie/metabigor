@@ -45,7 +45,6 @@ func runCVE(cmd *cobra.Command, _ []string) error {
 		os.Exit(1)
 	}
 
-
 	var wg sync.WaitGroup
 	jobs := make(chan string)
 
