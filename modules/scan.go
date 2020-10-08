@@ -95,6 +95,9 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	nmapOutput = tmpFile.Name()
 
 	// build nmap command
+	if options.Scan.All {
+		options.Scan.NmapTemplate = "sudo nmap -sSV -p {{.ports}} -iL {{.input}} {{.script}} -T4 --open -oA {{.output}}"
+	}
 	nmapCommand := make(map[string]string)
 	nmapCommand["output"] = nmapOutput
 	nmapCommand["ports"] = ports
@@ -105,6 +108,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		nmapCommand["script"] = ""
 	}
 	nmapCmd := ResolveData(options.Scan.NmapTemplate, nmapCommand)
+
 	//
 	//nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
 	//if options.Scan.NmapScripts != "" {
