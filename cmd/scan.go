@@ -31,7 +31,7 @@ func init() {
 	scanCmd.Flags().BoolVarP(&options.Scan.SkipOverview, "skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
 	// more nmap options
 	scanCmd.Flags().StringVarP(&options.Scan.NmapScripts, "script", "S", "", "nmap scripts")
-	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "sudo nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
+	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
 	scanCmd.Flags().StringVar(&options.Scan.GrepString, "grep", "", "match string to confirm script success")
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
 	scanCmd.Flags().BoolVar(&options.Scan.IPv4, "4", true, "Filter input to only get ipv4")

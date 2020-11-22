@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -13,6 +14,17 @@ import (
 
 	"github.com/j3ssie/metabigor/core"
 )
+
+// CurrentUser get current user
+func CurrentUser() string {
+	u, err := user.Current()
+	if err != nil {
+		return ""
+	}
+
+	username := u.Username
+	return username
+}
 
 // RunMasscan run masscan command and return list of port open
 func RunMasscan(input string, options core.Options) []string {
@@ -29,9 +41,12 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 	massOutput = tmpFile.Name()
 
-	masscanCmd := fmt.Sprintf("sudo masscan --rate %v -p %v -oG %v %v", rate, ports, massOutput, input)
+	masscanCmd := fmt.Sprintf("masscan --rate %v -p %v -oG %v %v", rate, ports, massOutput, input)
 	if options.Scan.All {
-		masscanCmd = fmt.Sprintf("sudo masscan --rate %v -p %v -oG %v -iL %v", rate, ports, massOutput, input)
+		masscanCmd = fmt.Sprintf("masscan --rate %v -p %v -oG %v -iL %v", rate, ports, massOutput, input)
+	}
+	if CurrentUser() != "root" {
+		masscanCmd = "sudo " + masscanCmd
 	}
 
 	core.DebugF("Execute: %v", masscanCmd)
@@ -96,7 +111,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 
 	// build nmap command
 	if options.Scan.All {
-		options.Scan.NmapTemplate = "sudo nmap -sSV -p {{.ports}} -iL {{.input}} {{.script}} -T4 --open -oA {{.output}}"
+		options.Scan.NmapTemplate = "nmap -sSV -p {{.ports}} -iL {{.input}} {{.script}} -T4 --open -oA {{.output}}"
 	}
 	nmapCommand := make(map[string]string)
 	nmapCommand["output"] = nmapOutput
@@ -108,7 +123,9 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		nmapCommand["script"] = ""
 	}
 	nmapCmd := ResolveData(options.Scan.NmapTemplate, nmapCommand)
-
+	if CurrentUser() != "root" {
+		nmapCmd = "sudo " + nmapCmd
+	}
 	//
 	//nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
 	//if options.Scan.NmapScripts != "" {
@@ -200,7 +217,10 @@ func RunZmap(inputFile string, port string, options core.Options) []string {
 		tmpFile, _ = ioutil.TempFile(zmapOutput, fmt.Sprintf("out-%v-*.txt", core.StripPath(filepath.Base(inputFile))))
 	}
 	zmapOutput = tmpFile.Name()
-	zmapCmd := fmt.Sprintf("sudo zmap -p %v -w %v -f 'saddr,sport' -O csv -o %v", port, inputFile, zmapOutput)
+	zmapCmd := fmt.Sprintf("zmap -p %v -w %v -f 'saddr,sport' -O csv -o %v", port, inputFile, zmapOutput)
+	if CurrentUser() != "root" {
+		zmapCmd = "sudo " + zmapCmd
+	}
 	core.DebugF("Execute: %v", zmapCmd)
 	command := []string{
 		"bash",
