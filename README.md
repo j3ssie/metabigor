@@ -14,7 +14,7 @@ Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but witho
 ## Installation
 
 ```
-go get -u github.com/j3ssie/metabigor
+GO111MODULE=on go get github.com/j3ssie/metabigor
 ```
 
 ## Main features
@@ -52,16 +52,25 @@ echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
 
 # search IP on shodan
 echo '1.2.3.4' | metabigor ip -s 'shodan' -v
+
+# certificate search info on crt.sh
+echo 'Target' | metabigor cert
 ```
 
 ## Credits
 
-Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg) by [freepik](https://www.flaticon.com/authors/freepik)
+Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg)
+by [freepik](https://www.flaticon.com/authors/freepik)
 
 ## Disclaimer
 
-This tool is for educational purposes only. You are responsible for your own actions. If you mess something up or break any laws while using this software, it's your fault, and your fault only.
+This tool is for educational purposes only. You are responsible for your own actions. If you mess something up or break
+any laws while using this software, it's your fault, and your fault only.
 
 ## License
 
-`Metabigor` is made with ♥  by [@j3ssiejjj](https://twitter.com/j3ssiejjj) and it is released under the MIT license.
+`Metabigor` is made with ♥ by [@j3ssiejjj](https://twitter.com/j3ssiejjj) and it is released under the MIT license.
+
+## Donation
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/j3ssiejjj)

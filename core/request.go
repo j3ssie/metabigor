@@ -4,12 +4,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,12 +19,45 @@ var headers map[string]string
 // SendGET just send GET request
 func SendGET(url string, options Options) string {
 	headers = map[string]string{
-		"UserAgent":  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-		"Accept":     "*/*",
-		"AcceptLang": "en-US,en;q=0.8",
+		"User-Agent":      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+		"Accept-Encoding": "*/*",
+		"Accept-Language": "en-US,en;q=0.8",
 	}
 	resp, _ := JustSend(options, "GET", url, headers, "")
 	return resp.Body
+}
+
+func BigResponseReq(baseUrl string, options Options) string {
+	client := &http.Client{
+		Timeout: time.Duration(options.Timeout*3) * time.Second,
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout: time.Second * 60,
+			}).DialContext,
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 500,
+			MaxConnsPerHost:     500,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: true, Renegotiation: tls.RenegotiateOnceAsClient},
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	req, _ := http.NewRequest("GET", baseUrl, nil)
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36")
+	resp, err := client.Do(req)
+	if err != nil {
+		ErrorF("%v", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		// do something with the error
+		ErrorF("%v", err)
+		return ""
+	}
+	return string(content)
 }
 
 // SendPOST just send POST request
@@ -88,7 +122,7 @@ func JustSend(options Options, method string, url string, headers map[string]str
 
 	if err != nil || resp == nil {
 		ErrorF("%v %v", url, err)
-		return Response{}, err
+		return res, err
 	}
 
 	return ParseResponse(*resp), nil

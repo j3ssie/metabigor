@@ -20,6 +20,13 @@ type Options struct {
 	Net         NetOptions
 	Search      SearchOptions
 	CVE         CVEOptions
+	Cert        CertOptions
+}
+
+// CertOptions options for net command
+type CertOptions struct {
+	Clean        bool
+	OnlyWildCard bool
 }
 
 // ScanOptions options for net command

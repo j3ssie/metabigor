@@ -109,8 +109,8 @@ func IPv4Info(options core.Options) []string {
 	ASNLink = funk.Uniq(ASNLink).([]string)
 	for _, link := range ASNLink {
 		core.InforF("Get data from: %v", link)
-		url := fmt.Sprintf(`http://ipv4info.com%v`, link)
-		core.InforF("Get data from: %v", url)
+		URL := fmt.Sprintf(`http://ipv4info.com%v`, link)
+		core.InforF("Get data from: %v", URL)
 		content := core.SendGET(url, options)
 		// finding ID of block
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
