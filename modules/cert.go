@@ -77,7 +77,7 @@ func ParseCertSH(content string, options core.Options) []CertData {
 			}
 		})
 		// remove some noise
-		if strings.Contains(certInfo.Domain, ".") {
+		if strings.Contains(certInfo.Domain, ".") && !strings.Contains(certInfo.Domain, " ") {
 			if options.Cert.Clean {
 				certInfo.Domain = strings.ReplaceAll(certInfo.Domain, "*.", "")
 				results = append(results, certInfo)
