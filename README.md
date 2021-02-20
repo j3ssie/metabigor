@@ -19,17 +19,14 @@ GO111MODULE=on go get github.com/j3ssie/metabigor
 
 ## Main features
 
-- Discover IP Address of the target.
+- Searching information about IP Address, ASN and Organization.
 - Wrapper for running masscan and nmap on IP target.
 - Do searching from command line on some search engine.
-
-## Demo
-
-[![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
 
 ## Example Commands
 
 ```
+Examples Commands:
 # discovery IP of a company/organization
 echo "company" | metabigor net --org -o /tmp/result.txt
 
@@ -50,12 +47,17 @@ cat ranges.txt | metabigor scan -p '443,80' -z
 # search result on fofa
 echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
 
-# search IP on shodan
-echo '1.2.3.4' | metabigor ip -s 'shodan' -v
-
 # certificate search info on crt.sh
 echo 'Target' | metabigor cert
+
+# Get Summary about IP address (powered by @thebl4ckturtle)
+cat list_of_ips.txt | metabigor ipc --json
 ```
+
+## Demo
+
+[![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
+
 
 ## Credits
 

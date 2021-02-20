@@ -27,8 +27,8 @@ type RangeInfo struct {
 	Country string `json:"country"`
 }
 
-// IPInfo get CIDR from ASN
-func IPInfo(options core.Options) []string {
+// GetIPInfo get CIDR from ASN
+func GetIPInfo(options core.Options) []string {
 	asn := getAsnNum(options.Net.Asn)
 	url := fmt.Sprintf(`https://ipinfo.io/AS%v`, asn)
 	var result []string

@@ -9,7 +9,7 @@ import (
 func TestIPInfo(t *testing.T) {
 	var options core.Options
 	options.Net.Asn = "AS714"
-	result := IPInfo(options)
+	result := GetIPInfo(options)
 	if len(result) == 0 {
 		t.Errorf("Error IPInfo")
 	}

@@ -3,6 +3,7 @@ package core
 // Options global options
 type Options struct {
 	Input      string
+	InputFile      string
 	Output     string
 	TmpOutput  string
 	ConfigFile string
@@ -54,7 +55,9 @@ type NetOptions struct {
 	Org      string
 	IP       string
 	Domain   string
+	SearchType string
 	Optimize bool
+	ExactMatch bool
 }
 
 // SearchOptions options for net command

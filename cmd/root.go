@@ -14,7 +14,7 @@ var options = core.Options{}
 
 var RootCmd = &cobra.Command{
 	Use:   "metabigor",
-	Short: "metabigor",
+	Short: fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 	Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 }
 
@@ -33,6 +33,7 @@ func init() {
 	RootCmd.PersistentFlags().IntVarP(&options.Concurrency, "concurrency", "c", 5, "concurrency")
 	RootCmd.PersistentFlags().IntVar(&options.Timeout, "timeout", 40, "timeout")
 	RootCmd.PersistentFlags().StringVarP(&options.Input, "input", "i", "-", "input as a string, file or from stdin")
+	RootCmd.PersistentFlags().StringVarP(&options.InputFile, "inputFile", "", "-", "Input file")
 	RootCmd.PersistentFlags().StringVarP(&options.Output, "output", "o", "out.txt", "output name")
 	RootCmd.PersistentFlags().BoolVar(&options.Debug, "debug", false, "Debug")
 	RootCmd.PersistentFlags().BoolVarP(&options.JsonOutput, "json", "j", false, "Output as JSON")
@@ -50,6 +51,7 @@ func initConfig() {
 	// if !core.FileExists(options.ConfigFile) {
 	// 	core.InitConfig(options)
 	// }
+
 	if options.Scan.TmpOutput != "" && !core.FolderExists(options.Scan.TmpOutput) {
 		core.InforF("Create new temp folder: %v", options.Scan.TmpOutput)
 		os.MkdirAll(options.Scan.TmpOutput, 0750)
@@ -73,6 +75,12 @@ func initConfig() {
 		}
 	}
 
+	// get input from a file or just a string
+	if core.FileExists(options.InputFile) {
+		options.Input = core.GetFileContent(options.InputFile)
+	}
+
+
 	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
 	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
 }
@@ -81,7 +89,9 @@ func initConfig() {
 func RootMessage(cmd *cobra.Command, _ []string) {
 	fmt.Printf(cmd.UsageString())
 	h := `
-Examples Commands:
+Examples Commands
+=================
+
 # discovery IP of a company/organization
 echo "company" | metabigor net --org -o /tmp/result.txt
 
@@ -99,11 +109,12 @@ echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
 # Only run scan with zmap
 cat ranges.txt | metabigor scan -p '443,80' -z
 
-# search result on fofa
-echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
+# certificate search info on crt.sh
+echo 'Target' | metabigor cert
 
-# search IP on shodan
-echo '1.2.3.4' | metabigor ip -s 'shodan' -v
+# Get Summary about IP address (powered by @thebl4ckturtle)
+cat list_of_ips.txt | metabigor ipc --json
+
 `
 	fmt.Printf(h)
 }
