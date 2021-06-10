@@ -22,7 +22,7 @@ func init() {
 	RootCmd.AddCommand(netCmd)
 }
 
-func runIPC(cmd *cobra.Command, _ []string) error {
+func runIPC(_ *cobra.Command, _ []string) error {
 	// prepare input
 	var inputs []string
 	if strings.Contains(options.Input, "\n") {
@@ -88,9 +88,9 @@ func runIPC(cmd *cobra.Command, _ []string) error {
 			var asnSum AsnSummaryByCIDR
 			asnSum.CIDR = as.CIDR
 			asnSum.Count = as.Amount
-			asnSum.ASNumber = asnNumber
-			asnSum.ASCountry = as.CountryCode
-			asnSum.ASDesc = asnInfos[0].Description
+			asnSum.Number = asnNumber
+			asnSum.CountryCode = as.CountryCode
+			asnSum.Description = asnInfos[0].Description
 			groupbyCIDR = append(groupbyCIDR, asnSum)
 		}
 	}
@@ -101,12 +101,11 @@ func runIPC(cmd *cobra.Command, _ []string) error {
 		if options.JsonOutput {
 			if data, err := jsoniter.MarshalToString(asnSum); err == nil {
 				contents = append(contents, data)
-
 			}
 			continue
 		}
 
-		data := fmt.Sprintf("%d - %s - %d", asnSum.ASNumber, asnSum.CIDR, asnSum.Count)
+		data := fmt.Sprintf("%d - %s - %d", asnSum.Number, asnSum.CIDR, asnSum.Count)
 		contents = append(contents, data)
 	}
 	StoreData(contents, options)
@@ -118,9 +117,9 @@ func runIPC(cmd *cobra.Command, _ []string) error {
 }
 
 type AsnSummaryByCIDR struct {
-	ASNumber  int
-	ASDesc    string
-	ASCountry string
-	CIDR      string
-	Count     int
+	Number      int
+	Description string
+	CountryCode string
+	CIDR        string
+	Count       int
 }

@@ -58,7 +58,6 @@ cat list_of_ips.txt | metabigor ipc --json
 
 [![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
 
-
 ## Credits
 
 Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg)

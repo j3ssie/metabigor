@@ -24,7 +24,6 @@ type ASInfo struct {
 	CountryCode string
 	Description string
 	CIDR        string
-	CIDRs        []string
 }
 
 func GetAsnMap() (AsnMap, error) {
@@ -69,7 +68,7 @@ func (m *AsnMap) ASDesc(name string) (AsnNum []int) {
 	return AsnNum
 }
 
-// ASofIP returns 0 on unknown.
+// ASInfo returns 0 on unknown.
 func (m *AsnMap) ASInfo(asnNum int) []ASInfo {
 	var asnInfos []ASInfo
 	if asnNum == 0 {

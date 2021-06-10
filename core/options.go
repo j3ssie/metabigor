@@ -3,7 +3,7 @@ package core
 // Options global options
 type Options struct {
 	Input      string
-	InputFile      string
+	InputFile  string
 	Output     string
 	TmpOutput  string
 	ConfigFile string
@@ -42,6 +42,7 @@ type ScanOptions struct {
 	All          bool
 	IPv4         bool
 	IPv6         bool
+	Skip80And443 bool
 	SkipOverview bool
 	TmpOutput    string
 	NmapScripts  string
@@ -51,12 +52,12 @@ type ScanOptions struct {
 
 // NetOptions options for net command
 type NetOptions struct {
-	Asn      string
-	Org      string
-	IP       string
-	Domain   string
+	Asn        string
+	Org        string
+	IP         string
+	Domain     string
 	SearchType string
-	Optimize bool
+	Optimize   bool
 	ExactMatch bool
 }
 

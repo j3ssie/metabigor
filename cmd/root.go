@@ -47,10 +47,6 @@ func initConfig() {
 		options.Verbose = true
 	}
 	core.InitLog(&options)
-	// planned feature
-	// if !core.FileExists(options.ConfigFile) {
-	// 	core.InitConfig(options)
-	// }
 
 	if options.Scan.TmpOutput != "" && !core.FolderExists(options.Scan.TmpOutput) {
 		core.InforF("Create new temp folder: %v", options.Scan.TmpOutput)
@@ -64,7 +60,10 @@ func initConfig() {
 			var data []string
 			sc := bufio.NewScanner(os.Stdin)
 			for sc.Scan() {
-				data = append(data, sc.Text())
+				input := strings.TrimSpace(sc.Text())
+				if err := sc.Err(); err == nil && input != "" {
+					data = append(data, input)
+				}
 			}
 			options.Input = strings.Join(data, "\n")
 		}
@@ -79,7 +78,6 @@ func initConfig() {
 	if core.FileExists(options.InputFile) {
 		options.Input = core.GetFileContent(options.InputFile)
 	}
-
 
 	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
 	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
@@ -103,8 +101,9 @@ cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
 echo '1.2.3.4/24' | metabigor scan -o result.txt
 
 # Only run nmap detail scan
-echo '1.2.3.4:21' | metabigor scan -s -c 10
-echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
+echo '1.2.3.4:21' | metabigor scan -s
+cat list_of_ip_with_port.txt | metabigor scan -c 10 --8 -s -o result.txt
+cat list_of_ip_with_port.txt | metabigor scan -c 10 --tmp /tmp/raw-result/ -s -o result.txt
 
 # Only run scan with zmap
 cat ranges.txt | metabigor scan -p '443,80' -z

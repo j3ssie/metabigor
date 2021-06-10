@@ -35,6 +35,7 @@ func init() {
 	scanCmd.Flags().StringVar(&options.Scan.GrepString, "grep", "", "match string to confirm script success")
 	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
 	scanCmd.Flags().BoolVar(&options.Scan.IPv4, "4", true, "Filter input to only get ipv4")
+	scanCmd.Flags().BoolVar(&options.Scan.Skip80And443, "8", false, "Skip ports 80 and 443. Useful when you want to look for service behind the list of pre-scanned data")
 	//scanCmd.Flags().Bool("6",  false, "Filter input to only get ipv4")
 	scanCmd.Flags().BoolP("detail", "D", false, "Do Nmap scan based on previous output")
 	scanCmd.Flags().Bool("uniq", true, "Unique input first")
@@ -194,6 +195,12 @@ func runDetail(input string, options core.Options) []string {
 }
 
 func directDetail(input string, options core.Options) []string {
+	if options.Scan.Skip80And443 {
+		if strings.HasSuffix(input, ":80") && strings.HasSuffix(input, ":443") {
+			return []string{}
+		}
+	}
+
 	if input == "" {
 		return []string{}
 	}
@@ -234,7 +241,7 @@ func parseResult(resultFolder string, options core.Options) {
 		return
 	}
 
-	// massscan
+	// masscan
 	for _, file := range Files {
 		filename := file.Name()
 		core.DebugF("Reading: %v", filename)

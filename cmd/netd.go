@@ -15,7 +15,7 @@ import (
 func init() {
 	var netCmd = &cobra.Command{
 		Use:   "netd",
-		Short: "Discover Network Information about targets (same with net command but use 3rd data)",
+		Short: "Discover Network Information about targets (similar with 'net' command but use 3rd data)",
 		Long:  fmt.Sprintf(`Metabigor - Intelligence Framework but without API key - %v by %v`, core.VERSION, core.AUTHOR),
 		RunE:  runNetD,
 	}
