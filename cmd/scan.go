@@ -29,11 +29,12 @@ func init() {
 	scanCmd.Flags().BoolVarP(&options.Scan.NmapOverview, "nmap", "n", false, "Use nmap instead of masscan for overview scan")
 	scanCmd.Flags().BoolVarP(&options.Scan.ZmapOverview, "zmap", "z", false, "Only scan range with zmap")
 	scanCmd.Flags().BoolVarP(&options.Scan.SkipOverview, "skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
+	scanCmd.Flags().BoolVarP(&options.Scan.InputFromRustScan, "rstd", "R", false, "run nmap from rustscan input format like: 1.2.3.4 -> [80,443,8080,8443,8880]")
 	// more nmap options
 	scanCmd.Flags().StringVarP(&options.Scan.NmapScripts, "script", "S", "", "nmap scripts")
-	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "nmap -sSV -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
+	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "nmap -sSV -sC -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
 	scanCmd.Flags().StringVar(&options.Scan.GrepString, "grep", "", "match string to confirm script success")
-	scanCmd.Flags().StringP("result-folder", "R", "", "Result folder")
+	scanCmd.Flags().String("result-folder", "", "Result folder")
 	scanCmd.Flags().BoolVar(&options.Scan.IPv4, "4", true, "Filter input to only get ipv4")
 	scanCmd.Flags().BoolVar(&options.Scan.Skip80And443, "8", false, "Skip ports 80 and 443. Useful when you want to look for service behind the list of pre-scanned data")
 	//scanCmd.Flags().Bool("6",  false, "Filter input to only get ipv4")
@@ -50,6 +51,10 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	if resultFolder != "" {
 		parseResult(resultFolder, options)
 		os.Exit(0)
+	}
+
+	if options.Scan.InputFromRustScan {
+		options.Scan.SkipOverview = true
 	}
 
 	if options.Input == "-" || options.Input == "" {
@@ -195,22 +200,37 @@ func runDetail(input string, options core.Options) []string {
 }
 
 func directDetail(input string, options core.Options) []string {
+	var out []string
 	if options.Scan.Skip80And443 {
 		if strings.HasSuffix(input, ":80") && strings.HasSuffix(input, ":443") {
-			return []string{}
+			return out
 		}
 	}
 
 	if input == "" {
-		return []string{}
+		return out
 	}
-	if len(strings.Split(input, ":")) == 1 {
-		return []string{}
+	var host, ports string
+
+	if options.Scan.InputFromRustScan {
+		// 1.1.1.1 -> [80,443,2095,2096,8080,8443,8880]
+		if !strings.Contains(input, "->") {
+			return out
+		}
+		host = strings.Split(input, " -> ")[0]
+		ports = strings.Split(input, " -> ")[1]
+		ports = strings.TrimLeft(strings.TrimRight(ports, "]"), "[")
+	} else {
+		if len(strings.Split(input, ":")) == 1 {
+			return out
+		}
+		host = strings.Split(input, ":")[0]
+		ports = strings.Split(input, ":")[1]
 	}
-	host := strings.Split(input, ":")[0]
-	ports := strings.Split(input, ":")[1]
+
 	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v:%v", host, ports))
-	return modules.RunNmap(host, ports, options)
+	out = modules.RunNmap(host, ports, options)
+	return out
 }
 
 // only parse result

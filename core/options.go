@@ -32,22 +32,23 @@ type CertOptions struct {
 
 // ScanOptions options for net command
 type ScanOptions struct {
-	Ports        string
-	Rate         string
-	NmapTemplate string
-	NmapOverview bool
-	ZmapOverview bool
-	Detail       bool
-	Flat         bool
-	All          bool
-	IPv4         bool
-	IPv6         bool
-	Skip80And443 bool
-	SkipOverview bool
-	TmpOutput    string
-	NmapScripts  string
-	GrepString   string
-	InputFile    string
+	Ports             string
+	Rate              string
+	NmapTemplate      string
+	NmapOverview      bool
+	ZmapOverview      bool
+	Detail            bool
+	Flat              bool
+	All               bool
+	IPv4              bool
+	IPv6              bool
+	Skip80And443      bool
+	SkipOverview      bool
+	InputFromRustScan bool
+	TmpOutput         string
+	NmapScripts       string
+	GrepString        string
+	InputFile         string
 }
 
 // NetOptions options for net command

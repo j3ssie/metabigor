@@ -100,10 +100,11 @@ cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
 # Only run masscan full ports
 echo '1.2.3.4/24' | metabigor scan -o result.txt
 
-# Only run nmap detail scan
+# Only run nmap detail scan based on pre-scan data
 echo '1.2.3.4:21' | metabigor scan -s
 cat list_of_ip_with_port.txt | metabigor scan -c 10 --8 -s -o result.txt
 cat list_of_ip_with_port.txt | metabigor scan -c 10 --tmp /tmp/raw-result/ -s -o result.txt
+echo '1.2.3.4 -> [80,443,2222]' | metabigor scan -R
 
 # Only run scan with zmap
 cat ranges.txt | metabigor scan -p '443,80' -z
