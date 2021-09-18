@@ -37,19 +37,19 @@ cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
 # Only run masscan full ports
 echo '1.2.3.4/24' | metabigor scan -o result.txt
 
-# Only run nmap detail scan based on pre-scan data
+# only run nmap detail scan based on pre-scan data
 echo '1.2.3.4:21' | metabigor scan -s -c 10
 echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
 echo '1.2.3.4 -> [80,443,2222]' | metabigor scan -R
 
-# Only run scan with zmap
+# only run scan with zmap
 cat ranges.txt | metabigor scan -p '443,80' -z
-
-# search result on fofa
-echo 'title="RabbitMQ Management"' | metabigor search -x -v -o /tmp/result.txt
 
 # certificate search info on crt.sh
 echo 'Target' | metabigor cert
+
+# find more root domains
+echo 'Target Inc' | metabigor cert --json | jq -r '.Domain' | unfurl format %r.%t | sort -u
 
 # Get Summary about IP address (powered by @thebl4ckturtle)
 cat list_of_ips.txt | metabigor ipc --json
@@ -76,3 +76,5 @@ any laws while using this software, it's your fault, and your fault only.
 ## Donation
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/j3ssiejjj)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/j3ssie)

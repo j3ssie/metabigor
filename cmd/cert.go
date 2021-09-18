@@ -31,9 +31,10 @@ func runCert(cmd *cobra.Command, _ []string) error {
 	// auto increase timeout
 	options.Timeout = 120
 	var inputs []string
-	if options.Input != "-" && options.Input != "" {
+
+	if options.Input != "-" {
 		if strings.Contains(options.Input, "\n") {
-			inputs = strings.Split(options.Input, "\n")
+			inputs = append(inputs, strings.Split(options.Input, "\n")...)
 		} else {
 			inputs = append(inputs, options.Input)
 		}
@@ -80,8 +81,6 @@ func runCert(cmd *cobra.Command, _ []string) error {
 func runCertSearch(input string, options core.Options) []string {
 	var data []string
 	core.BannerF(fmt.Sprintf("Search on %v for: ", "crt.sh"), input)
-	//options.Search.Query = input
-
 	result := modules.CrtSHOrg(input, options)
 	data = append(data, result...)
 

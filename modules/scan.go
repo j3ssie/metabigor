@@ -126,6 +126,7 @@ func RunNmap(input string, ports string, options core.Options) []string {
 	if CurrentUser() != "root" {
 		nmapCmd = "sudo " + nmapCmd
 	}
+
 	//
 	//nmapCmd := fmt.Sprintf("sudo nmap -sSV -p %v %v -T4 --open -oA %v", ports, input, nmapOutput)
 	//if options.Scan.NmapScripts != "" {
@@ -176,7 +177,6 @@ func ParseNmap(raw string, options core.Options) []string {
 
 		for _, port := range host.Ports {
 			info := fmt.Sprintf("%v:%v/%v/%v", host.IPAddress, port.PortID, port.Protocol, port.Service.Product)
-			//fmt.Println(info)
 			result = append(result, info)
 		}
 	}

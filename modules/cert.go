@@ -6,23 +6,22 @@ import (
 	"github.com/j3ssie/metabigor/core"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/thoas/go-funk"
+	"net/url"
 	"strings"
 )
 
-// CrtSH get IPInfo from https://www.onyphe.io
+// CrtSHOrg get IPInfo from https://crt.sh
 func CrtSHOrg(org string, options core.Options) []string {
-	url := fmt.Sprintf(`https://crt.sh/?O=%v`, org)
+	crtURL := fmt.Sprintf(`https://crt.sh/?O=%v`, url.QueryEscape(org))
 	var result []string
-	core.InforF("Get data from: %v", url)
-	content := core.BigResponseReq(url, options)
-	//fmt.Println( content)
+	core.InforF("Get data from: %v", crtURL)
+	content := core.BigResponseReq(crtURL, options)
 	if content == "" {
-		core.ErrorF("Error sending request to: %v", url)
+		core.ErrorF("Error sending request to: %v", crtURL)
 		return result
 	}
 
 	infos := ParseCertSH(content, options)
-
 	for _, info := range infos {
 		var data string
 		if options.JsonOutput {
@@ -40,7 +39,6 @@ func CrtSHOrg(org string, options core.Options) []string {
 		} else {
 			data = info.Domain
 		}
-		//fmt.Println(data)
 		result = append(result, data)
 	}
 	result = funk.UniqString(result)
