@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Metabigor" src="https://image.flaticon.com/icons/svg/1789/1789851.svg" height="140" />
+  <img alt="Metabigor" src="https://user-images.githubusercontent.com/23289085/143042137-28f8e7e5-e485-4dc8-a09b-10759a593210.png" height="140" />
   <p align="center">Intelligence Tool but without API key</p>
   <p align="center">
     <a href="https://github.com/j3ssie/metabigor"><img alt="Release" src="https://img.shields.io/github/v/release/j3ssie/metabigor.svg"></a>
@@ -20,8 +20,11 @@ GO111MODULE=on go get github.com/j3ssie/metabigor
 ## Main features
 
 - Searching information about IP Address, ASN and Organization.
-- Wrapper for running masscan and nmap on IP target.
-- Do searching from command line on some search engine.
+- Wrapper for running rustscan, masscan and nmap on IP/CIDR.
+- Finding more root domains by searching certificate information on crt.sh
+- Get Summary about IP address (powered by [@thebl4ckturtle](https://github.com/theblackturtle))
+- Do searching from the command line on some search engine.
+
 
 ## Example Commands
 
