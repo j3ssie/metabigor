@@ -14,7 +14,7 @@ Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but witho
 ## Installation
 
 ```
-GO111MODULE=on go install github.com/j3ssie/metabigor@latest
+go install github.com/j3ssie/metabigor@latest
 ```
 
 ## Main features
@@ -61,6 +61,17 @@ cat list_of_ips.txt | metabigor ipc --json
 ## Demo
 
 [![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
+
+
+## Painless integrate Jaeles into your recon workflow?
+
+<p align="center">
+  <img alt="OsmedeusEngine" src="https://raw.githubusercontent.com/osmedeus/assets/main/logo-transparent.png" height="200" />
+  <p align="center">
+    This project was part of Osmedeus Engine. Check out how it was integrated at <a href="https://twitter.com/OsmedeusEngine">@OsmedeusEngine</a>
+  </p>
+</p>
+
 
 ## Credits
 
