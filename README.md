@@ -14,7 +14,7 @@ Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but witho
 ## Installation
 
 ```
-GO111MODULE=on go get github.com/j3ssie/metabigor
+GO111MODULE=on go install github.com/j3ssie/metabigor@latest
 ```
 
 ## Main features
