@@ -20,7 +20,6 @@ func ExtractGoogleTagManger(content string) (results []string) {
     // regex 1
     regex := regexp.MustCompile(`www\.googletagmanager\.com/ns\.html\?id=[A-Z0-9\-]+`)
     data := regex.FindStringSubmatch(content)
-    fmt.Println(data)
 
     if len(data) > 0 {
         gtm := strings.Split(data[0], "id=")[1]
@@ -42,7 +41,5 @@ func ExtractGoogleTagManger(content string) (results []string) {
     //for _, id := range ua {
     //    results = append(results, id[0])
     //}
-
-    fmt.Println("ExtractGoogleTagManger: ", results)
     return results
 }
