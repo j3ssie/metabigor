@@ -2,4 +2,4 @@
 .goreleaser.yml
 .idea
 dist
-out*
+out*dist/

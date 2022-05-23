@@ -1,102 +1,105 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-	"strings"
-	"sync"
+    "fmt"
+    "github.com/j3ssie/metabigor/core"
+    "github.com/j3ssie/metabigor/modules"
+    jsoniter "github.com/json-iterator/go"
+    "github.com/panjf2000/ants"
+    "github.com/projectdiscovery/mapcidr"
+    "github.com/spf13/cobra"
+    "strings"
+    "sync"
 
-	"github.com/j3ssie/metabigor/core"
-	"github.com/j3ssie/metabigor/modules"
-	"github.com/spf13/cobra"
+    "net"
 )
 
-func init() {
-	var ipCmd = &cobra.Command{
-		Use:   "ip",
-		Short: "IP OSINT Search",
-		Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
-		RunE:  runIP,
-	}
+var csvOutput = false
+var onlyHost = false
 
-	ipCmd.Flags().StringP("source", "s", "all", "Search Engine Select")
-	ipCmd.Flags().StringSliceP("query", "q", []string{}, "Query to search (Multiple -q flags are accepted)")
-	RootCmd.AddCommand(ipCmd)
+func init() {
+    var ipCmd = &cobra.Command{
+        Use:   "ip",
+        Short: "Extract Shodan IPInfo from internetdb.shodan.io",
+        Long:  core.DESC,
+        RunE:  runIP,
+    }
+    ipCmd.PersistentFlags().Bool("csv", true, "Show Output as CSV format")
+    ipCmd.PersistentFlags().Bool("open", false, "Show Output as format 'IP:Port' only")
+    RootCmd.AddCommand(ipCmd)
 }
 
 func runIP(cmd *cobra.Command, _ []string) error {
-	options.Search.Source, _ = cmd.Flags().GetString("source")
-	options.Search.Source = strings.ToLower(options.Search.Source)
-	options.Search.More, _ = cmd.Flags().GetBool("brute")
-	options.Search.Optimize, _ = cmd.Flags().GetBool("optimize")
-	queries, _ := cmd.Flags().GetStringSlice("query")
+    csvOutput, _ = cmd.Flags().GetBool("csv")
+    onlyHost, _ = cmd.Flags().GetBool("open")
 
-	var inputs []string
-	if options.Input != "-" && options.Input != "" {
-		if strings.Contains(options.Input, "\n") {
-			inputs = strings.Split(options.Input, "\n")
-		} else {
-			inputs = append(inputs, options.Input)
-		}
-	}
-	if len(queries) > 0 {
-		inputs = append(inputs, queries...)
-	}
-	if len(inputs) == 0 {
-		core.ErrorF("No input found")
-		os.Exit(1)
-	}
+    var wg sync.WaitGroup
+    p, _ := ants.NewPoolWithFunc(options.Concurrency, func(i interface{}) {
+        job := i.(string)
+        StartJob(job)
+        wg.Done()
+    }, ants.WithPreAlloc(true))
+    defer p.Release()
 
-	if options.Search.More {
-		inputs = addMoreQuery(inputs, options)
-	}
+    for _, target := range options.Inputs {
+        wg.Add(1)
+        _ = p.Invoke(strings.TrimSpace(target))
+    }
 
-	var wg sync.WaitGroup
-	jobs := make(chan string)
-
-	for i := 0; i < options.Concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			// do real stuff here
-			for job := range jobs {
-				searchResult := runIPSingle(job, options)
-				StoreData(searchResult, options)
-			}
-		}()
-	}
-
-	for _, input := range inputs {
-		jobs <- input
-	}
-
-	close(jobs)
-	wg.Wait()
-
-	if !core.FileExists(options.Output) {
-		core.ErrorF("No data found")
-	}
-	core.DebugF("Unique Output: %v", options.Output)
-	core.Unique(options.Output)
-	return nil
+    wg.Wait()
+    return nil
 }
 
-func runIPSingle(input string, options core.Options) []string {
-	var data []string
-	core.BannerF(fmt.Sprintf("Search on %v for: ", options.Search.Source), input)
-	if options.Search.Source == "all" {
-		options.Search.Source = "ony,shodan,trails"
-	}
-	options.Search.Query = input
+func StartJob(raw string) {
+    _, _, err := net.ParseCIDR(raw)
+    if err != nil {
+        GetShodanIPInfo(raw)
+        return
+    }
 
-	// select source
-	if strings.Contains(options.Search.Source, "ony") {
-		data = append(data, modules.Onyphe(options.Search.Query, options)...)
-	}
+    if ips, err := mapcidr.IPAddresses(raw); err == nil {
+        for _, ip := range ips {
+            GetShodanIPInfo(ip)
+        }
+    }
+}
 
-	if strings.Contains(options.Search.Source, "sho") {
-		data = append(data, modules.Shodan(options.Search.Query, options)...)
-	}
+type ShodanIPInfo struct {
+    Cpes      []string `json:"cpes"`
+    Hostnames []string `json:"hostnames"`
+    IP        string   `json:"ip"`
+    Ports     []int    `json:"ports"`
+    Tags      []string `json:"tags"`
+    Vulns     []string `json:"vulns"`
+}
 
-	return data
+func GetShodanIPInfo(IP string) {
+    data := modules.InternetDB(IP)
+    if data == "" {
+        core.ErrorF("No data found for: %s", IP)
+        return
+    }
+
+    if options.JsonOutput {
+        fmt.Println(data)
+        return
+    }
+
+    var shodanIPInfo ShodanIPInfo
+    if ok := jsoniter.Unmarshal([]byte(data), &shodanIPInfo); ok != nil {
+        return
+    }
+
+    if csvOutput {
+        for _, port := range shodanIPInfo.Ports {
+            line := fmt.Sprintf("%s:%d", IP, port)
+            if onlyHost {
+                fmt.Println(line)
+                continue
+            }
+
+            line = fmt.Sprintf("%s,%s,%s,%s,%s", line, strings.Join(shodanIPInfo.Hostnames, ";"), strings.Join(shodanIPInfo.Tags, ";"), strings.Join(shodanIPInfo.Cpes, ";"), strings.Join(shodanIPInfo.Vulns, ";"))
+            fmt.Println(line)
+        }
+    }
 }

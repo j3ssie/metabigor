@@ -16,6 +16,11 @@ build:
 run:
 	$(GO) $(GOFLAGS) run *.go
 
+release:
+	VERSION=$(cat $GOPATH/src/github.com/j3ssie/metabigor/core/version.go | grep 'VERSION =' | cut -d '"' -f 2)
+	echo "Building release version $VERSION"
+	git tag -a $VERSION-m "Release $VERSION"
+	git push origin $VERSION
 update:
 	rm -rf $(GOPATH)/src/github.com/j3ssie/metabigor/static/ip2asn-combined.tsv.gz
 	wget -q https://iptoasn.com/data/ip2asn-combined.tsv.gz -O $(GOPATH)/src/github.com/j3ssie/metabigor/static/ip2asn-combined.tsv.gz
