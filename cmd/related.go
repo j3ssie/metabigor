@@ -13,10 +13,11 @@ import (
 
 func init() {
     var tldCmd = &cobra.Command{
-        Use:   "related",
-        Short: "Finding more related domains of the target by applying various techniques",
-        Long:  fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
-        RunE:  runTLD,
+        Use:     "related",
+        Aliases: []string{"tld", "relate"},
+        Short:   "Finding more related domains of the target by applying various techniques",
+        Long:    fmt.Sprintf(`Metabigor - Intelligence Tool but without API key - %v by %v`, core.VERSION, core.AUTHOR),
+        RunE:    runTLD,
     }
     tldCmd.Flags().StringVarP(&options.Tld.Source, "src", "s", "all", "Source for gathering TLD")
     RootCmd.AddCommand(tldCmd)

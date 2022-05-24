@@ -122,7 +122,7 @@ echo 'example.com' | metabigor related -s 'whois'
 
 ## Getting more related by searching for google analytics ID
 echo 'https://example.com' | metabigor related -s 'google-analytic'
-metabigor tld -s 'google-analytic' -i 'UA-9152XXX' --debug
+metabigor related -s 'google-analytic' -i 'UA-9152XXX' --debug
 `
     fmt.Printf(h)
 }

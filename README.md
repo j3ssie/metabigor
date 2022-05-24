@@ -102,7 +102,7 @@ echo 'example.com' | metabigor related -s 'whois'
 echo 'https://example.com' | metabigor related -s 'google-analytic'
 
 # You can also search it directly from the UA ID too
-metabigor tld -s 'google-analytic' -i 'UA-9152XXX' --debug
+metabigor related -s 'google-analytic' -i 'UA-9152XXX' --debug
 ```
 
 *** 
