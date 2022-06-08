@@ -36,7 +36,7 @@ func ExtractGoogleTagManger(content string) (results []string) {
     }
 
     // regex 3
-    //regex = regexp.MustCompile(`UA-\d+-\d+`)
+    //regex = regexp.MustCompile(`UA-[0-9]+-[0-9]+`)
     //ua := regex.FindAllStringSubmatch(content, -1)
     //for _, id := range ua {
     //    results = append(results, id[0])
