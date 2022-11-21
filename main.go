@@ -1,7 +1,9 @@
 package main
 
-import "github.com/j3ssie/metabigor/cmd"
+import (
+	"github.com/j3ssie/metabigor/cmd"
+)
 
 func main() {
-    cmd.Execute()
+	cmd.Execute()
 }

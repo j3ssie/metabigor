@@ -28,7 +28,7 @@ func init() {
 	scanCmd.Flags().BoolVarP(&options.Scan.Flat, "flat", "f", true, "format output like this: 1.2.3.4:443")
 	scanCmd.Flags().BoolVarP(&options.Scan.NmapOverview, "nmap", "n", false, "Use nmap instead of masscan for overview scan")
 	scanCmd.Flags().BoolVarP(&options.Scan.ZmapOverview, "zmap", "z", false, "Only scan range with zmap")
-	scanCmd.Flags().BoolVarP(&options.Scan.SkipOverview, "skip-masscan", "s", false, "run nmap from input format like this: 1.2.3.4:443")
+	scanCmd.Flags().BoolVar(&options.PipeTheOutput, "pipe", false, "pipe the output to another command")
 	scanCmd.Flags().BoolVarP(&options.Scan.InputFromRustScan, "rstd", "R", false, "run nmap from rustscan input format like: 1.2.3.4 -> [80,443,8080,8443,8880]")
 	// more nmap options
 	scanCmd.Flags().StringVarP(&options.Scan.NmapScripts, "script", "S", "", "nmap scripts")
@@ -111,7 +111,7 @@ func runScan(cmd *cobra.Command, _ []string) error {
 		if options.Scan.NmapOverview {
 			result = modules.RunNmap(options.Scan.InputFile, "", options)
 		} else {
-			result = modules.RunMasscan(options.Scan.InputFile, options)
+			result = modules.RunRustScan(options.Scan.InputFile, options)
 		}
 		StoreData(result, options)
 		return nil
@@ -149,7 +149,7 @@ func runRoutine(input string, options core.Options) []string {
 	if options.Scan.NmapOverview {
 		data = append(data, modules.RunNmap(input, "", options)...)
 	} else {
-		data = append(data, modules.RunMasscan(input, options)...)
+		data = append(data, modules.RunRustScan(input, options)...)
 	}
 
 	if !options.Scan.Detail {

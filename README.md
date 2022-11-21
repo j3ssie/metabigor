@@ -12,7 +12,6 @@
 
 ***
 
-
 # What is Metabigor?
 
 Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but without any API key.
@@ -30,13 +29,12 @@ go install github.com/j3ssie/metabigor@latest
 - Finding more related domains of the target by applying various techniques (certificate, whois, Google Analytics, etc).
 - Get Summary about IP address (powered by [**@thebl4ckturtle**](https://github.com/theblackturtle))
 
-
 # Usage
 
 ## Discovery IP of a company/organization - `metabigor net`
 
-The difference between net and **netd** command is that **netd** will get the dynamic result from the third-party source while net command will get the static result from the database.
-
+The difference between net and **netd** command is that **netd** will get the dynamic result from the third-party source
+while net command will get the static result from the database.
 
 ```bash
 # discovery IP of a company/organization
@@ -53,10 +51,10 @@ echo "ASN1111" | metabigor netd --asn -o /tmp/result.txt
 
 ## Finding more related domains of the target by applying various techniques (certificate, whois, Google Analytics, etc) - `metabigor related`
 
-> Note some of the results are not 100% accurate. Please do a manual check first before put it directly to other tools to scan.
+> Note some of the results are not 100% accurate. Please do a manual check first before put it directly to other tools
+> to scan.
 
 Some specific technique require different input so please see the usage of each technique.
-
 
 ## Using certificate to find related domains on crt.sh
 
@@ -68,23 +66,22 @@ echo 'Target Inc' | metabigor cert --json | jq -r '.Domain' | unfurl format %r.%
 echo 'example Inc' | metabigor related -s 'cert'
 ```
 
-## Wrapper for running rustscan, masscan and nmap more efficient on IP/CIDR - `metabigor scan` 
+## Wrapper for running rustscan, masscan and nmap more efficient on IP/CIDR - `metabigor scan`
 
 This command will require you to install `masscan`, `rustscan` and `nmap` first or at least the pre-scan result of them.
 
 ```bash
-# Only run masscan full ports
+# Only run rustscan with full ports
 echo '1.2.3.4/24' | metabigor scan -o result.txt
 
-# only run nmap detail scan based on pre-scan data
-echo '1.2.3.4:21' | metabigor scan -s -c 10
-echo '1.2.3.4:21' | metabigor scan --tmp /tmp/raw-result/ -s -o result.txt
-
-# run nmap detail scan based on pre-scan data of rustscan
+# Only run nmap detail scan based on pre-scan data
+echo '1.2.3.4:21' | metabigor scan -s
+cat list_of_ip_with_port.txt | metabigor scan -c 10 --8 -s -o result.txt
+cat list_of_ip_with_port.txt | metabigor scan -c 10 --tmp /tmp/raw-result/ -s -o result.txt
 echo '1.2.3.4 -> [80,443,2222]' | metabigor scan -R
 
-# only run scan with zmap
-cat ranges.txt | metabigor scan -p '443,80' -z
+# Run rustscan with full ports and nmap detail scan based on pre-scan data
+echo '1.2.3.4/24' | metabigor scan --pipe | metabigor scan -R 
 ```
 
 ***
@@ -111,11 +108,9 @@ metabigor related -s 'google-analytic' -i 'UA-9152XXX' --debug
 
 This will show you the summary of the IP address provided like ASN, Organization, Country, etc.
 
-
 ```bash
 cat list_of_ips.txt | metabigor ipc --json
 ```
-
 
 ## Extract Shodan IPInfo from internetdb.shodan.io
 
@@ -133,14 +128,13 @@ echo '1.2.3.4/24' | metabigor ip -open -c 20
 echo '1.2.3.4' | metabigor ip -json
 ```
 
-
 # Demo
 
 [![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
 
 *** 
 
-# Painless integrate Jaeles into your recon workflow?
+# Painless integrate Metabigor into your recon workflow?
 
 <p align="center">
   <img alt="OsmedeusEngine" src="https://raw.githubusercontent.com/osmedeus/assets/main/logo-transparent.png" height="200" />

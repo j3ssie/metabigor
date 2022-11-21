@@ -301,7 +301,7 @@ func runOrg(input string, options core.Options) []string {
 
 // StoreData store data to output
 func StoreData(data []string, options core.Options) {
-	if len(data) == 0 {
+	if len(data) == 0 && !options.PipeTheOutput {
 		core.ErrorF("Empty data to write")
 		return
 	}
