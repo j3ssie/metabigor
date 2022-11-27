@@ -45,6 +45,8 @@ type CertOptions struct {
 type ScanOptions struct {
 	Ports             string
 	Rate              string
+	Retry             string
+	Timeout           string
 	NmapTemplate      string
 	NmapOverview      bool
 	ZmapOverview      bool

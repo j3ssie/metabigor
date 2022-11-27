@@ -41,7 +41,18 @@ func RunRustScan(input string, options core.Options) (results []string) {
 	if strings.Contains(options.Scan.Ports, ",") || !strings.Contains(options.Scan.Ports, "-") {
 		ports = fmt.Sprintf("--ports %v", options.Scan.Ports)
 	}
-	rustscanCmd := fmt.Sprintf("rustscan --timeout 3000 -b %v --scripts None %v -a %v -g >> %v", options.Scan.Rate, ports, input, tmpOutput)
+
+	prefix := fmt.Sprintf("rustscan -b %v", options.Scan.Rate)
+	if options.Scan.Timeout != "" {
+		prefix += fmt.Sprintf(" --timeout %v", options.Scan.Timeout)
+	} else {
+		prefix += " --timeout 3000 "
+	}
+	if options.Scan.Retry != "" {
+		prefix += fmt.Sprintf(" --tries %v", options.Scan.Retry)
+	}
+
+	rustscanCmd := fmt.Sprintf("%v %v --scripts None -a %v -g >> %v", prefix, ports, input, tmpOutput)
 	runOSCommand(rustscanCmd)
 
 	core.InforF("Parsing result from: %v", tmpOutput)

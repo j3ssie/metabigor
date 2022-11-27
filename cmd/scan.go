@@ -22,7 +22,9 @@ func init() {
 	}
 	// scan options
 	scanCmd.Flags().StringVarP(&options.Scan.Ports, "ports", "p", "0-65535", "Port range for previous command")
-	scanCmd.Flags().StringVarP(&options.Scan.Rate, "rate", "r", "3000", "rate limit for masscan command")
+	scanCmd.Flags().StringVarP(&options.Scan.Rate, "rate", "r", "3000", "rate limit for rustscan command")
+	scanCmd.Flags().StringVar(&options.Scan.Retry, "retry", "", "retry limit for rustscan command")
+	scanCmd.Flags().StringVar(&options.Scan.Timeout, "timeout", "", "timeout for rustscan command")
 	scanCmd.Flags().BoolVarP(&options.Scan.All, "join", "A", false, "Join all inputs to a file first then do a scan")
 	// scan strategy option
 	scanCmd.Flags().BoolVarP(&options.Scan.Flat, "flat", "f", true, "format output like this: 1.2.3.4:443")
