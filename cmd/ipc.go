@@ -23,14 +23,6 @@ func init() {
 }
 
 func runIPC(_ *cobra.Command, _ []string) error {
-	// prepare input
-	var inputs []string
-	if strings.Contains(options.Input, "\n") {
-		inputs = strings.Split(options.Input, "\n")
-	} else {
-		inputs = append(inputs, options.Input)
-	}
-
 	var err error
 	ASNMap, err = modules.GetAsnMap()
 	if err != nil {
@@ -42,7 +34,7 @@ func runIPC(_ *cobra.Command, _ []string) error {
 	groupByAsn := map[int][]*modules.ASInfo{}
 
 	// do real stuff here
-	for _, job := range inputs {
+	for _, job := range options.Inputs {
 		ip, err := netaddr.ParseIP(strings.TrimSpace(job))
 		if err != nil {
 			continue
@@ -109,10 +101,6 @@ func runIPC(_ *cobra.Command, _ []string) error {
 		contents = append(contents, data)
 	}
 	StoreData(contents, options)
-
-	if !core.FileExists(options.Output) {
-		core.ErrorF("No data found")
-	}
 	return nil
 }
 
