@@ -134,10 +134,10 @@ echo '1.2.3.4' | metabigor ip -json
 
 *** 
 
-# Painless integrate Metabigor into your recon workflow?
+## Painless integrate Metabigor into your recon workflow?
 
 <p align="center">
-  <img alt="OsmedeusEngine" src="https://raw.githubusercontent.com/osmedeus/assets/main/logo-transparent.png" height="200" />
+  <img alt="OsmedeusEngine" src="https://raw.githubusercontent.com/osmedeus/assets/main/part-of-osmedeus-banner.png" />
   <p align="center">
     This project was part of Osmedeus Engine. Check out how it was integrated at <a href="https://twitter.com/OsmedeusEngine">@OsmedeusEngine</a>
   </p>
