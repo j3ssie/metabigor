@@ -10,6 +10,7 @@
 # supported CodeQL languages.
 #
 name: "CodeQL"
+
 on: push
 
 jobs:
@@ -45,15 +46,17 @@ jobs:
       uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
-		    config: |
+        # config: ${{ vars.CODEQL_CONF }} # better put the config as another YAML file
+        config: |
           disable-default-queries: true
           queries:
             - uses: security-extended
           query-filters:
-          - exclude:
+            - exclude:
               problem.severity:
                 - warning
                 - recommendation
+
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
