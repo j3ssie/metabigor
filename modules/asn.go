@@ -6,14 +6,14 @@ import (
 	"compress/gzip"
 	_ "embed"
 	"fmt"
-	"go4.org/mem"
-	"inet.af/netaddr"
 	"io"
 	"math/big"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+
+	"inet.af/netaddr"
 )
 
 // Most of the file literally copied from @thebl4ckturtle code
@@ -150,7 +150,7 @@ func GenAsnData(r io.Reader) (*AsnMap, error) {
 		if string(desc) == "Not routed" {
 			continue
 		}
-		as64, err := mem.ParseInt(mem.B(asnB), 10, 64)
+		as64, err := strconv.ParseInt(string(asnB), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("bogus ASN %q for line %q", asnB, line)
 		}
