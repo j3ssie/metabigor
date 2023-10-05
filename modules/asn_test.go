@@ -4,12 +4,12 @@ import (
 	_ "embed"
 	"fmt"
 
+	"testing"
+
 	"github.com/davecgh/go-spew/spew"
 	"inet.af/netaddr"
-	"testing"
 )
 
-//go:embed static/secret.txt
 var src string
 
 func TestEmbeded(t *testing.T) {
