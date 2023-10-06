@@ -3,9 +3,10 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"net"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/j3ssie/metabigor/core"

@@ -2,94 +2,73 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/j3ssie/metabigor/core"
-	"github.com/j3ssie/metabigor/modules"
 	jsoniter "github.com/json-iterator/go"
+	asnmap "github.com/projectdiscovery/asnmap/libs"
 	"github.com/spf13/cobra"
-	"inet.af/netaddr"
-	"os"
-	"sort"
-	"strings"
 )
 
 func init() {
 	var netCmd = &cobra.Command{
 		Use:   "ipc",
-		Short: "Summary about IP list (powered by @thebl4ckturtle)",
+		Short: "Summary about IP list",
 		Long:  core.DESC,
 		RunE:  runIPC,
 	}
 	RootCmd.AddCommand(netCmd)
 }
 
+var ASNClient *asnmap.Client
+
 func runIPC(_ *cobra.Command, _ []string) error {
-	var err error
-	ASNMap, err = modules.GetAsnMap()
+	ASNClient, err := asnmap.NewClient()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error to generate asn info")
-		os.Exit(-1)
+		core.ErrorF("Unable to init asnmap client: %v", err)
+		return err
 	}
 
-	summary := map[string]*modules.ASInfo{}
-	groupByAsn := map[int][]*modules.ASInfo{}
+	asnCount := make(map[string]int)
+	asnGroupByCIDR := map[string]AsnSummaryByCIDR{}
+	asnSums := []AsnSummaryByCIDR{}
 
-	// do real stuff here
-	for _, job := range options.Inputs {
-		ip, err := netaddr.ParseIP(strings.TrimSpace(job))
+	for _, input := range options.Inputs {
+		item, err := ASNClient.GetData(input)
 		if err != nil {
 			continue
 		}
-		if asn := ASNMap.ASofIP(ip); asn.AS != 0 {
-			if result, ok := summary[asn.CIDR]; ok {
-				result.Amount++
-				continue
-			} else {
-				summary[asn.CIDR] = &modules.ASInfo{
-					Amount:      1,
-					Number:      asn.AS,
-					CountryCode: ASNMap.ASCountry(asn.AS),
-					Description: ASNMap.ASName(asn.AS),
-					CIDR:        asn.CIDR,
-				}
+
+		listOfCIDR, err := asnmap.GetCIDR(item)
+		if err != nil {
+			continue
+		}
+		for _, cidr := range listOfCIDR {
+			asnCount[cidr.String()]++
+
+			asnGroupByCIDR[cidr.String()] = AsnSummaryByCIDR{
+				Number:      item[0].ASN,
+				Description: item[0].Org,
+				CountryCode: item[0].Country,
 			}
 		}
+
 	}
 
-	for _, result := range summary {
-		if _, ok := groupByAsn[result.Number]; ok {
-			groupByAsn[result.Number] = append(groupByAsn[result.Number], result)
-		} else {
-			groupByAsn[result.Number] = []*modules.ASInfo{}
-			groupByAsn[result.Number] = append(groupByAsn[result.Number], result)
-		}
-	}
-
-	// do summary here
-	var groupbyCIDR []AsnSummaryByCIDR
-	for asnNumber, asnInfos := range groupByAsn {
-		//fmt.Printf("AS: %d - %s\n", asnNumber, asnInfos[0].Description)
-
-		sort.Slice(asnInfos, func(i, j int) bool {
-			return asnInfos[i].Amount > asnInfos[j].Amount
+	for cidr, count := range asnCount {
+		asnInfo := asnGroupByCIDR[cidr]
+		asnSums = append(asnSums, AsnSummaryByCIDR{
+			CIDR:        cidr,
+			Count:       count,
+			Number:      asnInfo.Number,
+			Description: asnInfo.Description,
+			CountryCode: asnInfo.CountryCode,
 		})
 
-		//asnSum.Count +=
-		for _, as := range asnInfos {
-			//fmt.Printf("\t%-16s\t%-4d IPs\n", as.CIDR, as.Amount)
-
-			var asnSum AsnSummaryByCIDR
-			asnSum.CIDR = as.CIDR
-			asnSum.Count = as.Amount
-			asnSum.Number = asnNumber
-			asnSum.CountryCode = as.CountryCode
-			asnSum.Description = asnInfos[0].Description
-			groupbyCIDR = append(groupbyCIDR, asnSum)
-		}
 	}
 
 	// print the output here
 	var contents []string
-	for _, asnSum := range groupbyCIDR {
+	for _, asnSum := range asnSums {
 		if options.JsonOutput {
 			if data, err := jsoniter.MarshalToString(asnSum); err == nil {
 				contents = append(contents, data)
@@ -100,6 +79,7 @@ func runIPC(_ *cobra.Command, _ []string) error {
 		data := fmt.Sprintf("%d - %s - %d", asnSum.Number, asnSum.CIDR, asnSum.Count)
 		contents = append(contents, data)
 	}
+
 	StoreData(contents, options)
 	return nil
 }

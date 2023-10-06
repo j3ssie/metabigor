@@ -2,16 +2,16 @@ package cmd
 
 import (
 	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
 	"github.com/j3ssie/metabigor/core"
 	"github.com/j3ssie/metabigor/modules"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/panjf2000/ants"
-	"github.com/spf13/cast"
+	asnmap "github.com/projectdiscovery/asnmap/libs"
 	"github.com/spf13/cobra"
 	"github.com/thoas/go-funk"
-	"inet.af/netaddr"
-	"net"
-	"os"
+
 	"strings"
 	"sync"
 )
@@ -46,8 +46,6 @@ func init() {
 	RootCmd.AddCommand(netdCmd)
 }
 
-var ASNMap modules.AsnMap
-
 func runNet(cmd *cobra.Command, _ []string) error {
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
@@ -62,17 +60,6 @@ func runNet(cmd *cobra.Command, _ []string) error {
 		options.Net.SearchType = "ip"
 	} else if domain {
 		options.Net.SearchType = "domain"
-	}
-	if options.Net.SearchType == "" {
-		fmt.Fprintf(os.Stderr, "You need to specify search type with one of these flag: --asn, --org or --ip")
-		os.Exit(-1)
-	}
-
-	var err error
-	ASNMap, err = modules.GetAsnMap()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error to generate asn info")
-		os.Exit(-1)
 	}
 
 	var wg sync.WaitGroup
@@ -99,43 +86,9 @@ func runNet(cmd *cobra.Command, _ []string) error {
 
 func runNetJob(input string, options core.Options) []string {
 	var data []string
-	var asnInfos []modules.ASInfo
+	var asnInfos []ASInfo
 
-	if !options.Net.ExactMatch {
-		input = strings.ToLower(input)
-
-	}
-
-	switch options.Net.SearchType {
-	case "asn":
-		input = strings.ToLower(input)
-		if strings.Contains(input, "as") {
-			input = strings.ReplaceAll(input, "as", "")
-		}
-		asInfos := ASNMap.ASInfo(cast.ToInt(input))
-		if len(asInfos) > 0 {
-			asnInfos = append(asnInfos, asInfos...)
-		}
-
-	case "org":
-		asnNums := ASNMap.ASDesc(input)
-		if len(asnNums) > 0 {
-			for _, asnNum := range asnNums {
-				asnInfos = append(asnInfos, ASNMap.ASInfo(asnNum)...)
-			}
-		}
-
-	case "ip":
-		asnInfos = append(asnInfos, searchByIP(input)...)
-
-	case "domain":
-		ips, err := net.LookupHost(input)
-		if err == nil {
-			for _, ip := range ips {
-				asnInfos = append(asnInfos, searchByIP(ip)...)
-			}
-		}
-	}
+	asnInfos = handleInput(input)
 
 	if len(asnInfos) == 0 {
 		core.ErrorF("No result found for: %s", input)
@@ -150,7 +103,7 @@ func runNetJob(input string, options core.Options) []string {
 	return data
 }
 
-func genOutput(asnInfo modules.ASInfo) string {
+func genOutput(asnInfo ASInfo) string {
 	var line string
 	if options.JsonOutput {
 		if content, err := jsoniter.MarshalToString(asnInfo); err == nil {
@@ -166,16 +119,32 @@ func genOutput(asnInfo modules.ASInfo) string {
 	return line
 }
 
-func searchByIP(input string) []modules.ASInfo {
-	var asnInfo []modules.ASInfo
-
-	ip, err := netaddr.ParseIP(input)
+func handleInput(input string) (asnInfo []ASInfo) {
+	ASNClient, err := asnmap.NewClient()
 	if err != nil {
+		core.ErrorF("Unable to init asnmap client: %v", err)
+		return asnInfo
+	}
+	results, err := ASNClient.GetData(input)
+
+	if options.Debug {
+		spew.Dump(results)
+	}
+
+	if err != nil {
+		core.ErrorF("No result found for: %v", err)
 		return asnInfo
 	}
 
-	if asn := ASNMap.ASofIP(ip); asn.AS != 0 {
-		return ASNMap.ASInfo(asn.AS)
+	listOfCIDR, err := asnmap.GetCIDR(results)
+	for _, cidr := range listOfCIDR {
+		info := ASInfo{
+			CIDR:        cidr.String(),
+			Number:      results[0].ASN,
+			Description: results[0].Org,
+			CountryCode: results[0].Country,
+		}
+		asnInfo = append(asnInfo, info)
 	}
 	return asnInfo
 }
@@ -311,4 +280,12 @@ func StoreData(data []string, options core.Options) {
 	if err == nil {
 		core.InforF("Write output to: %v", options.Output)
 	}
+}
+
+type ASInfo struct {
+	Amount      int
+	Number      int
+	CountryCode string
+	Description string
+	CIDR        string
 }
