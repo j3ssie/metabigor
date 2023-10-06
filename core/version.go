@@ -4,7 +4,7 @@ import "fmt"
 
 const (
 	// VERSION current version of this project
-	VERSION = "v1.2.5"
+	VERSION = "v1.2.6"
 	// AUTHOR of this project
 	AUTHOR = "@j3ssiejjj"
 )
