@@ -126,17 +126,20 @@ func handleInput(input string) (asnInfo []ASInfo) {
 		return asnInfo
 	}
 	results, err := ASNClient.GetData(input)
+	if len(results) <= 0 || err != nil {
+		core.ErrorF("No result found for: %v", err)
+		return asnInfo
+	}
 
 	if options.Debug {
 		spew.Dump(results)
 	}
 
+	listOfCIDR, err := asnmap.GetCIDR(results)
 	if err != nil {
-		core.ErrorF("No result found for: %v", err)
 		return asnInfo
 	}
 
-	listOfCIDR, err := asnmap.GetCIDR(results)
 	for _, cidr := range listOfCIDR {
 		info := ASInfo{
 			CIDR:        cidr.String(),
