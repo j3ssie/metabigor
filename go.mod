@@ -7,7 +7,7 @@ require (
 	github.com/chromedp/chromedp v0.9.3
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.16.0
-	github.com/go-resty/resty/v2 v2.10.0
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/json-iterator/go v1.1.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/panjf2000/ants v1.3.0
