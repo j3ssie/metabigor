@@ -3,13 +3,14 @@ package modules
 import (
 	"bytes"
 	"fmt"
-	"github.com/thoas/go-funk"
 	"io/ioutil"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/thoas/go-funk"
 
 	jsoniter "github.com/json-iterator/go"
 

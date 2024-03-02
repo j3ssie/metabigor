@@ -2,27 +2,41 @@ package modules
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/j3ssie/metabigor/core"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/thoas/go-funk"
-	"net/url"
-	"strings"
 )
 
 // CrtSHOrg get IPInfo from https://crt.sh
 func CrtSHOrg(org string, options core.Options) []string {
 	crtURL := fmt.Sprintf(`https://crt.sh/?O=%v`, url.QueryEscape(org))
 	var result []string
+	var content string
+	var err error
+
 	core.InforF("Get data from: %v", crtURL)
-	content, err := core.GetResponse(crtURL, options)
-	// simple retry if something went wrong
-	if err != nil {
+	if content, err = core.GetResponse(crtURL, options); err != nil {
+		// simple retry if something went wrong
 		content, err = core.GetResponse(crtURL, options)
+		if err != nil || content == "" {
+			core.ErrorF("Error sending request to: %v", crtURL)
+			return result
+		}
 	}
-	if content == "" {
-		core.ErrorF("Error sending request to: %v", crtURL)
-		return result
+
+	// change the query
+	if strings.Contains(content, "None found") {
+		crtURL = fmt.Sprintf(`https://crt.sh/?q=%v`, url.QueryEscape(org))
+		core.InforF("No data found, change the query to: %v", crtURL)
+
+		if content, err = core.GetResponse(crtURL, options); err != nil {
+			core.ErrorF("Error sending request to: %v", crtURL)
+			return result
+		}
 	}
 
 	infos := ParseCertSH(content, options)
@@ -36,7 +50,6 @@ func CrtSHOrg(org string, options core.Options) []string {
 					if !options.Quiet {
 						fmt.Println(data)
 					}
-
 				}
 				continue
 			}
