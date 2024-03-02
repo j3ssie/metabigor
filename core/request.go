@@ -3,7 +3,7 @@ package core
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/sirupsen/logrus"
 )
 
 var headers map[string]string
@@ -68,13 +67,16 @@ func getResponse(baseUrl string, options Options) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	content, err := ioutil.ReadAll(resp.Body)
+	// Create a buffer to store response body
+	var bodyBuilder strings.Builder
+
+	// Read response body into the buffer
+	_, err = io.Copy(&bodyBuilder, resp.Body)
 	if err != nil {
-		// do something with the error
 		ErrorF("%v", err)
 		return "", err
 	}
-	return string(content), nil
+	return bodyBuilder.String(), nil
 }
 
 // SendPOST just send POST request
@@ -87,14 +89,7 @@ func SendPOST(url string, options Options) string {
 func JustSend(options Options, method string, url string, headers map[string]string, body string) (res Response, err error) {
 	timeout := options.Timeout
 
-	// disable log when retry
-	logger := logrus.New()
-	if !options.Debug {
-		logger.Out = ioutil.Discard
-	}
-
 	client := resty.New()
-	client.SetLogger(logger)
 	client.SetTransport(&http.Transport{
 		MaxIdleConns:          100,
 		MaxConnsPerHost:       1000,

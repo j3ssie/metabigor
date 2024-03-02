@@ -3,7 +3,7 @@ package modules
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
@@ -32,9 +32,9 @@ func CurrentUser() string {
 func RunRustScan(input string, options core.Options) (results []string) {
 	//  rustscan --timeout 3000 -b {{.rateRustScan}} --scripts None --range {{.ports}} -a {{.inputFile}} -g >> {{.Output}}/portscan/raw-open-ports.txt"
 	tmpOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "rustscan-*.txt")
+	tmpFile, _ := os.CreateTemp(options.Scan.TmpOutput, "rustscan-*.txt")
 	if tmpOutput != "" {
-		tmpFile, _ = ioutil.TempFile(tmpOutput, fmt.Sprintf("rustscan-%v-*.txt", core.StripPath(input)))
+		tmpFile, _ = os.CreateTemp(tmpOutput, fmt.Sprintf("rustscan-%v-*.txt", core.StripPath(input)))
 	}
 	tmpOutput = tmpFile.Name()
 
@@ -101,9 +101,9 @@ func RunMasscan(input string, options core.Options) []string {
 	}
 
 	massOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "masscan-*.txt")
+	tmpFile, _ := os.CreateTemp(options.Scan.TmpOutput, "masscan-*.txt")
 	if massOutput != "" {
-		tmpFile, _ = ioutil.TempFile(massOutput, fmt.Sprintf("masscan-%v-*.txt", core.StripPath(input)))
+		tmpFile, _ = os.CreateTemp(massOutput, fmt.Sprintf("masscan-%v-*.txt", core.StripPath(input)))
 	}
 	massOutput = tmpFile.Name()
 
@@ -163,9 +163,9 @@ func RunNmap(input string, ports string, options core.Options) []string {
 		ports = "443"
 	}
 	nmapOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "nmap-*")
+	tmpFile, _ := os.CreateTemp(options.Scan.TmpOutput, "nmap-*")
 	if nmapOutput != "" {
-		tmpFile, _ = ioutil.TempFile(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
+		tmpFile, _ = os.CreateTemp(nmapOutput, fmt.Sprintf("nmap-%v-*", core.StripPath(input)))
 	}
 	nmapOutput = tmpFile.Name()
 
@@ -266,9 +266,9 @@ func RunZmap(inputFile string, port string, options core.Options) []string {
 		ports = "443"
 	}
 	zmapOutput := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "out-*.txt")
+	tmpFile, _ := os.CreateTemp(options.Scan.TmpOutput, "out-*.txt")
 	if zmapOutput != "" {
-		tmpFile, _ = ioutil.TempFile(zmapOutput, fmt.Sprintf("out-%v-*.txt", core.StripPath(filepath.Base(inputFile))))
+		tmpFile, _ = os.CreateTemp(zmapOutput, fmt.Sprintf("out-%v-*.txt", core.StripPath(filepath.Base(inputFile))))
 	}
 	zmapOutput = tmpFile.Name()
 	zmapCmd := fmt.Sprintf("zmap -p %v -w %v -f 'saddr,sport' -O csv -o %v", port, inputFile, zmapOutput)

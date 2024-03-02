@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -20,22 +19,40 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-// GetFileContent Reading file and return content of it
+// GetFileContent reads file and returns its content.
 func GetFileContent(filename string) string {
-	var result string
+	var result strings.Builder
+
 	if strings.Contains(filename, "~") {
-		filename, _ = homedir.Expand(filename)
+		var err error
+		filename, err = homedir.Expand(filename)
+		if err != nil {
+			return ""
+		}
 	}
+
 	file, err := os.Open(filename)
 	if err != nil {
-		return result
+		return ""
 	}
 	defer file.Close()
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		return result
+
+	// Create a buffer to store file content
+	buf := make([]byte, 1024)
+
+	// Read file content into the buffer
+	for {
+		n, err := file.Read(buf)
+		if err != nil && err != io.EOF {
+			return ""
+		}
+		if n == 0 {
+			break
+		}
+		result.Write(buf[:n])
 	}
-	return string(b)
+
+	return result.String()
 }
 
 // ReadingFile Reading file and return content as []string

@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -12,6 +11,16 @@ import (
 	"github.com/sirupsen/logrus"
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
+
+// NullWriter implements the io.Writer interface
+// and discards all data written to it.
+type NullWriter struct{}
+
+// Write implements the Write method of the io.Writer interface.
+// It discards all data written to it.
+func (nw *NullWriter) Write(p []byte) (n int, err error) {
+	return len(p), nil
+}
 
 var logger = logrus.New()
 
@@ -48,7 +57,7 @@ func InitLog(options *Options) {
 		logger.SetLevel(logrus.InfoLevel)
 	}
 	if options.Quiet {
-		logger.SetOutput(ioutil.Discard)
+		logger.SetOutput(&NullWriter{})
 	}
 }
 
@@ -59,9 +68,8 @@ func GoodF(format string, args ...interface{}) {
 }
 
 // BannerF print info message
-func BannerF(format string, data string) {
-	banner := color.BlueString("[*] %v", format)
-	logger.Info(fmt.Sprintf("%v%v", banner, color.HiGreenString(data)))
+func BannerF(prefix string, data string) {
+	logger.Info(fmt.Sprintf("%v %v%v", color.HiBlueString("==>"), prefix, color.HiGreenString(data)))
 }
 
 // InforF print info message

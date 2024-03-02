@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -50,7 +49,7 @@ func runCert(_ *cobra.Command, _ []string) error {
 
 func runCertSearch(input string, options core.Options) []string {
 	var data []string
-	core.BannerF(fmt.Sprintf("Search on %v for: ", "crt.sh"), input)
+	core.BannerF("Searching on crt.sh for: ", input)
 	result := modules.CrtSHOrg(input, options)
 	data = append(data, result...)
 	return data

@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/thoas/go-funk"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
 
 	"github.com/j3ssie/metabigor/core"
 	"github.com/j3ssie/metabigor/modules"
@@ -228,9 +229,16 @@ func parseResult(resultFolder string, options core.Options) {
 		core.ErrorF("Result Folder not found: ", resultFolder)
 		return
 	}
-	core.BannerF("Reading result from: ", fmt.Sprintf("%v", resultFolder))
-	Files, err := ioutil.ReadDir(resultFolder)
+	dir, err := os.Open(resultFolder)
 	if err != nil {
+		fmt.Println(errors.Wrap(err, "error opening directory"))
+		return
+	}
+	defer dir.Close()
+
+	Files, err := dir.Readdir(0)
+	if err != nil {
+		fmt.Println(errors.Wrap(err, "error reading directory contents"))
 		return
 	}
 
@@ -271,10 +279,20 @@ func parseResult(resultFolder string, options core.Options) {
 // StoreTmpInput store list of string to tmp file
 func StoreTmpInput(raw []string, options core.Options) string {
 	tmpDest := options.Scan.TmpOutput
-	tmpFile, _ := ioutil.TempFile(options.Scan.TmpOutput, "joined-*.txt")
-	if tmpDest != "" {
-		tmpFile, _ = ioutil.TempFile(tmpDest, "joined-input-*.txt")
+	tmpFile, err := os.CreateTemp(tmpDest, "joined-*.txt")
+	if err != nil {
+		return ""
 	}
+	defer tmpFile.Close()
+
+	if tmpDest != "" {
+		tmpFile, err = os.CreateTemp(tmpDest, "joined-input-*.txt")
+		if err != nil {
+			return ""
+		}
+		defer tmpFile.Close()
+	}
+
 	tmpDest = tmpFile.Name()
 	core.WriteToFile(tmpDest, strings.Join(raw, "\n"))
 	return tmpDest

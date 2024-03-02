@@ -18,7 +18,7 @@ func CrtSHOrg(org string, options core.Options) []string {
 	var content string
 	var err error
 
-	core.InforF("Get data from: %v", crtURL)
+	core.InforF("Fetching data from: %v", crtURL)
 	if content, err = core.GetResponse(crtURL, options); err != nil {
 		// simple retry if something went wrong
 		content, err = core.GetResponse(crtURL, options)

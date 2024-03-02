@@ -33,7 +33,7 @@ func GetIPInfo(options core.Options) []string {
 	asn := getAsnNum(options.Net.Asn)
 	url := fmt.Sprintf(`https://ipinfo.io/AS%v`, asn)
 	var result []string
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	content := core.RequestWithChrome(url, "ipTabContent", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
@@ -88,7 +88,7 @@ func IPv4Info(options core.Options) []string {
 	url := fmt.Sprintf(`http://ipv4info.com/?act=check&ip=AS%v`, asn)
 	var result []string
 
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	content := core.SendGET(url, options)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
@@ -109,9 +109,9 @@ func IPv4Info(options core.Options) []string {
 	// searching for data
 	ASNLink = funk.Uniq(ASNLink).([]string)
 	for _, link := range ASNLink {
-		core.InforF("Get data from: %v", link)
+		core.InforF("Fetching data from: %v", link)
 		URL := fmt.Sprintf(`http://ipv4info.com%v`, link)
-		core.InforF("Get data from: %v", URL)
+		core.InforF("Fetching data from: %v", URL)
 		content := core.SendGET(url, options)
 		// finding ID of block
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
@@ -137,7 +137,7 @@ func IPv4Info(options core.Options) []string {
 func ASNBgpDotNet(options core.Options) []string {
 	asn := getAsnNum(options.Net.Asn)
 	url := fmt.Sprintf(`https://bgp.he.net/AS%v#_prefixes`, asn)
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	var result []string
 	content := core.RequestWithChrome(url, "prefixes", options.Timeout*4)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
@@ -162,7 +162,7 @@ func ASNSpyse(options core.Options) []string {
 	asn := getAsnNum(options.Net.Asn)
 	url := fmt.Sprintf(`https://spyse.com/target/as/%v#c-domain__anchor--3--%v`, asn, asn)
 	var result []string
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	content := core.RequestWithChrome(url, "asn-ipv4-ranges", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
@@ -188,7 +188,7 @@ func ASNSpyse(options core.Options) []string {
 func OrgBgpDotNet(options core.Options) []string {
 	org := options.Net.Org
 	url := fmt.Sprintf(`https://bgp.he.net/search?search%%5Bsearch%%5D=%v&commit=Search`, org)
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	var result []string
 	content := core.RequestWithChrome(url, "search", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
@@ -201,7 +201,7 @@ func OrgBgpDotNet(options core.Options) []string {
 		if !strings.Contains(s.Text(), "Result") && !strings.Contains(s.Text(), "Description") {
 			data := strings.Split(strings.TrimSpace(s.Text()), "  ")[0]
 			realdata := strings.Split(data, "\n")
-			cidr := strings.TrimSpace(realdata[0])
+			cidr := strings.Trim(strings.TrimSpace(realdata[0]), "Route")
 			desc := strings.TrimSpace(realdata[len(realdata)-1])
 			core.InforF(fmt.Sprintf("%s - %s", cidr, desc))
 			result = append(result, fmt.Sprintf("%s", cidr))
@@ -214,7 +214,7 @@ func OrgBgpDotNet(options core.Options) []string {
 func OrgBgbView(options core.Options) []string {
 	org := options.Net.Org
 	url := fmt.Sprintf(`https://bgpview.io/search/%v`, org)
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	var result []string
 	content := core.RequestWithChrome(url, "results-tabs", options.Timeout)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
@@ -239,7 +239,7 @@ func OrgBgbView(options core.Options) []string {
 func ASNLookup(options core.Options) []string {
 	org := options.Net.Org
 	url := fmt.Sprintf(`http://asnlookup.com/api/lookup?org=%v`, org)
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	data := core.SendGET(url, options)
 	var result []string
 	if data == "" {
@@ -267,7 +267,7 @@ func ASNFromIP(options core.Options) []string {
 		}
 	}
 	url := fmt.Sprintf(`https://www.ultratools.com/tools/asnInfoResult?domainName=%v`, ip)
-	core.InforF("Get data from: %v", url)
+	core.InforF("Fetching data from: %v", url)
 	content := core.SendGET(url, options)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {

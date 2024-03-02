@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/j3ssie/metabigor/core"
 	"github.com/spf13/cobra"
 )
@@ -82,8 +83,8 @@ func initConfig() {
 		options.Input = core.GetFileContent(options.InputFile)
 	}
 
-	core.InforF("Metabigor %v by %v", core.VERSION, core.AUTHOR)
-	core.InforF(fmt.Sprintf("Store log file to: %v", options.LogFile))
+	core.InforF("Metabigor %v by %v", core.VERSION, color.HiMagentaString(core.AUTHOR))
+	core.DebugF(fmt.Sprintf("Store log file to: %v", options.LogFile))
 }
 
 // RootMessage print help message

@@ -2,14 +2,15 @@ package modules
 
 import (
 	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/fatih/color"
 	"github.com/j3ssie/metabigor/core"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/thoas/go-funk"
-	"net/url"
-	"regexp"
-	"strings"
 )
 
 // CrtSH get IPInfo from https://crt.sh
@@ -18,7 +19,7 @@ func CrtSH(raw string, options core.Options) (result []core.RelatedDomain) {
 	core.InforF("Get more related domains with technique: " + color.HiMagentaString("%v:%v", technique, raw))
 
 	targetURL := fmt.Sprintf(`https://crt.sh/?O=%v`, url.QueryEscape(raw))
-	core.DebugF("Get data from: %v", targetURL)
+	core.DebugF("Fetching data from: %v", targetURL)
 	content, err := core.GetResponse(targetURL, options)
 	if content == "" || err != nil {
 		core.ErrorF("Error sending request to: %v", targetURL)
@@ -46,7 +47,7 @@ func ReverseWhois(raw string, options core.Options) (result []core.RelatedDomain
 	core.InforF("Get more related domains with technique: " + color.HiMagentaString("%v:%v", technique, raw))
 
 	targetURL := fmt.Sprintf(`https://viewdns.info/reversewhois/?q=%v`, url.QueryEscape(raw))
-	core.DebugF("Get data from: %v", targetURL)
+	core.DebugF("Fetching data from: %v", targetURL)
 	content, err := core.GetResponse(targetURL, options)
 	if content == "" || err != nil {
 		core.ErrorF("Error sending request to: %v", targetURL)
@@ -134,7 +135,7 @@ func BuiltwithUA(UAID string, options core.Options) (result []core.RelatedDomain
 	technique := "google-analytic"
 	core.InforF("Get more related domains with technique: " + color.HiMagentaString("%v:%v", technique, UAID))
 	dataURL := fmt.Sprintf(`https://builtwith.com/relationships/tag/%v`, url.QueryEscape(UAID))
-	core.DebugF("Get data from: %v", dataURL)
+	core.DebugF("Fetching data from: %v", dataURL)
 	content, err := core.GetResponse(dataURL, options)
 	// simple retry if something went wrong
 	if err != nil {

@@ -3,10 +3,11 @@ package modules
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/j3ssie/metabigor/core"
-	"io/ioutil"
+	"io"
 	"net/http"
-	"os"
+	"strings"
+
+	"github.com/j3ssie/metabigor/core"
 )
 
 var tr = &http.Transport{
@@ -19,14 +20,18 @@ func InternetDB(IP string) string {
 	core.DebugF("Getting information from: %s", ipURL)
 	resp, err := client.Get(ipURL)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
 		return ""
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+
+	// Create a buffer to store response body
+	var bodyBuilder strings.Builder
+
+	// Read response body into the buffer
+	_, err = io.Copy(&bodyBuilder, resp.Body)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
 		return ""
 	}
-	return string(body)
+
+	return bodyBuilder.String()
 }
