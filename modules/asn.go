@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"inet.af/netaddr"
+	"net/netip"
 )
 
 // Most of the file literally copied from @thebl4ckturtle code
@@ -56,7 +56,7 @@ type AsnMap struct {
 }
 
 type rec struct {
-	startIP, endIP netaddr.IP
+	startIP, endIP netip.Addr
 	asn            int
 }
 
@@ -94,7 +94,7 @@ func (m *AsnMap) ASInfo(asnNum int) []ASInfo {
 }
 
 // ASofIP returns 0 on unknown.
-func (m *AsnMap) ASofIP(ip netaddr.IP) IPInfo {
+func (m *AsnMap) ASofIP(ip netip.Addr) IPInfo {
 	cand := sort.Search(len(m.recs), func(i int) bool {
 		return ip.Less(m.recs[i].startIP)
 	})
@@ -103,7 +103,7 @@ func (m *AsnMap) ASofIP(ip netaddr.IP) IPInfo {
 
 // recIndexHasIP returns the AS number of m.rec[i] if i is in range and
 // the record contains the given IP address.
-func (m *AsnMap) recIndexHasIP(i int, ip netaddr.IP) (as IPInfo) {
+func (m *AsnMap) recIndexHasIP(i int, ip netip.Addr) (as IPInfo) {
 	if i < 0 {
 		return IPInfo{AS: 0}
 	}
@@ -161,11 +161,11 @@ func GenAsnData(r io.Reader) (*AsnMap, error) {
 			m.asDesc[string(desc)] = as
 		}
 
-		startIP, err := netaddr.ParseIP(string(startIPB)) // TODO: add ParseIPBytes
+		startIP, err := netip.ParseAddr(string(startIPB)) // TODO: add ParseIPBytes
 		if err != nil {
 			return nil, fmt.Errorf("bogus IP %q for line %q", startIPB, line)
 		}
-		endIP, err := netaddr.ParseIP(string(endIPB)) // TODO: add ParseIPBytes
+		endIP, err := netip.ParseAddr(string(endIPB)) // TODO: add ParseIPBytes
 		if err != nil {
 			return nil, fmt.Errorf("bogus IP %q for line %q", endIPB, line)
 		}

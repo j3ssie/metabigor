@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"strings"
 	"sync"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/thoas/go-funk"
-	"inet.af/netaddr"
 )
 
 func init() {
@@ -170,7 +170,7 @@ func genOutput(asnInfo modules.ASInfo) string {
 func searchByIP(input string) []modules.ASInfo {
 	var asnInfo []modules.ASInfo
 
-	ip, err := netaddr.ParseIP(input)
+	ip, err := netip.ParseAddr(input)
 	if err != nil {
 		return asnInfo
 	}

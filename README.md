@@ -22,6 +22,8 @@ Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but witho
 
 You can download pre-built binaries for your platform from the [releases page](https://github.com/j3ssie/metabigor/releases). Choose the appropriate binary for your operating system and architecture, download it, and place it in your `PATH`. 
 
+If the binary fails to execute, consider incorporating this into your environment: `export ASSUME_NO_MOVING_GC_UNSAFE_RISK_IT_WITH=go1.20`.
+
 ### Building from Source
 
 To install this project from source, you'll need Go installed on your system. If you haven't installed Go yet, you can follow the official installation instructions [here](https://golang.org/doc/install).
@@ -29,8 +31,9 @@ To install this project from source, you'll need Go installed on your system. If
 ```shell
 git clone https://github.com/j3ssie/metabigor.git
 cd metabigor
-go build
+go install
 ```
+
 
 # Main features
 
