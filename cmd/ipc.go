@@ -22,6 +22,7 @@ func init() {
 var ASNClient *asnmap.Client
 
 func runIPC(_ *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	ASNClient, err := asnmap.NewClient()
 	if err != nil {
 		core.ErrorF("Unable to init asnmap client: %v", err)

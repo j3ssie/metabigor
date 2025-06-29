@@ -58,6 +58,7 @@ type ScanOptions struct {
 	Skip80And443      bool
 	SkipOverview      bool
 	InputFromRustScan bool
+	InputFlatFormat   bool
 	TmpOutput         string
 	NmapScripts       string
 	GrepString        string

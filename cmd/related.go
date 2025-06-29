@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+	"sync"
+
 	"github.com/j3ssie/metabigor/core"
 	"github.com/j3ssie/metabigor/modules"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/panjf2000/ants"
 	"github.com/spf13/cobra"
-	"strings"
-	"sync"
 )
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 }
 
 func runTLD(_ *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	var wg sync.WaitGroup
 	p, _ := ants.NewPoolWithFunc(options.Concurrency, func(i interface{}) {
 		job := i.(string)

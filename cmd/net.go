@@ -50,6 +50,7 @@ func init() {
 var ASNMap modules.AsnMap
 
 func runNet(cmd *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
 	ip, _ := cmd.Flags().GetBool("ip")
@@ -184,6 +185,7 @@ func searchByIP(input string) []modules.ASInfo {
 /////////// netd command
 
 func runNetD(cmd *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	asn, _ := cmd.Flags().GetBool("asn")
 	org, _ := cmd.Flags().GetBool("org")
 	ip, _ := cmd.Flags().GetBool("ip")

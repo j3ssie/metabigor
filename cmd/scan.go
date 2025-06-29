@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 
@@ -34,6 +35,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&options.PipeTheOutput, "pipe", false, "pipe the output to another command")
 	scanCmd.Flags().BoolVarP(&options.Scan.InputFromRustScan, "rstd", "R", false, "run nmap from rustscan input format like: 1.2.3.4 -> [80,443,8080,8443,8880]")
 	// more nmap options
+	scanCmd.Flags().BoolVarP(&options.Scan.InputFlatFormat, "flat-input", "s", false, "Process the input format like '1.2.3.4:80'")
 	scanCmd.Flags().StringVarP(&options.Scan.NmapScripts, "script", "S", "", "nmap scripts")
 	scanCmd.Flags().StringVar(&options.Scan.NmapTemplate, "nmap-command", "nmap -sSV -sC -p {{.ports}} {{.input}} {{.script}} -T4 --open -oA {{.output}}", "Nmap template command to run")
 	scanCmd.Flags().StringVar(&options.Scan.GrepString, "grep", "", "match string to confirm script success")
@@ -48,6 +50,8 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
+
 	// only parse result
 	resultFolder, _ := cmd.Flags().GetString("result-folder")
 	uniq, _ := cmd.Flags().GetBool("uniq")
@@ -56,8 +60,11 @@ func runScan(cmd *cobra.Command, _ []string) error {
 		os.Exit(0)
 	}
 
-	if options.Scan.InputFromRustScan {
+	if options.Scan.InputFromRustScan || options.Scan.InputFlatFormat {
 		options.Scan.SkipOverview = true
+		if options.Scan.InputFlatFormat {
+			options.Inputs = formatFlatInput(options.Inputs)
+		}
 	}
 
 	// make sure input is valid
@@ -70,6 +77,8 @@ func runScan(cmd *cobra.Command, _ []string) error {
 	if uniq {
 		options.Inputs = funk.UniqString(options.Inputs)
 	}
+
+	// fmt.Println("options.Inputs", options.Inputs)
 	if len(options.Inputs) == 0 {
 		core.ErrorF("No input provided")
 		os.Exit(1)
@@ -218,6 +227,12 @@ func directDetail(input string, options core.Options) []string {
 		ports = strings.Split(input, ":")[1]
 	}
 
+	// input would looks like this '1.2.3.4:80'
+	if options.Scan.InputFlatFormat {
+		host = strings.Split(input, ":")[0]
+		ports = strings.Split(input, ":")[1]
+	}
+
 	core.BannerF("Run detail scan on: ", fmt.Sprintf("%v:%v", host, ports))
 	out = modules.RunNmap(host, ports, options)
 	return out
@@ -313,4 +328,32 @@ func ScanHelp(cmd *cobra.Command, _ []string) {
 	h += "  cat ranges.txt | metabigor scan -p '443,80' -z\n"
 	h += "\n"
 	fmt.Printf(h)
+}
+
+// combineHostPorts takes a slice of "host:port" strings and returns a combined string
+func formatFlatInput(hostPorts []string) []string {
+	hostMap := make(map[string][]string)
+
+	// Parse each host:port and group ports by host
+	for _, hp := range hostPorts {
+		parts := strings.Split(hp, ":")
+		if len(parts) != 2 {
+			continue // skip invalid entries
+		}
+		host, port := parts[0], parts[1]
+		hostMap[host] = append(hostMap[host], port)
+	}
+
+	// Build combined strings
+	var combined []string
+	for host, ports := range hostMap {
+		// Sort ports for consistent output
+		sort.Strings(ports)
+		combined = append(combined, fmt.Sprintf("%s:%s", host, strings.Join(ports, ",")))
+	}
+
+	// Sort combined by host for consistent output
+	sort.Strings(combined)
+
+	return combined
 }

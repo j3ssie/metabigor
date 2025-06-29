@@ -26,6 +26,7 @@ func init() {
 }
 
 func runCert(_ *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	options.Timeout = options.Timeout * 3
 
 	var wg sync.WaitGroup

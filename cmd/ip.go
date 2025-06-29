@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+	"sync"
+
 	"github.com/j3ssie/metabigor/core"
 	"github.com/j3ssie/metabigor/modules"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/panjf2000/ants"
 	"github.com/projectdiscovery/mapcidr"
 	"github.com/spf13/cobra"
-	"strings"
-	"sync"
 
 	"net"
 )
@@ -30,6 +31,7 @@ func init() {
 }
 
 func runIP(cmd *cobra.Command, _ []string) error {
+	ParsingInputs(&options)
 	csvOutput, _ = cmd.Flags().GetBool("csv")
 	onlyHost, _ = cmd.Flags().GetBool("open")
 

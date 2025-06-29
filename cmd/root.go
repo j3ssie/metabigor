@@ -56,20 +56,25 @@ func initConfig() {
 		options.Quiet = true
 	}
 	core.InitLog(&options)
+	core.InforF("Metabigor %v by %v", core.VERSION, color.HiMagentaString(core.AUTHOR))
+	core.DebugF(fmt.Sprintf("Store log file to: %v", options.LogFile))
+}
 
+func ParsingInputs(options *core.Options) {
 	if options.Scan.TmpOutput != "" && !core.FolderExists(options.Scan.TmpOutput) {
 		core.InforF("Create new temp folder: %v", options.Scan.TmpOutput)
 		os.MkdirAll(options.Scan.TmpOutput, 0750)
 	}
 
 	// detect if anything came from stdin
+	stdInputs := []string{}
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		sc := bufio.NewScanner(os.Stdin)
 		for sc.Scan() {
 			target := strings.TrimSpace(sc.Text())
 			if err := sc.Err(); err == nil && target != "" {
-				options.Inputs = append(options.Inputs, target)
+				stdInputs = append(stdInputs, target)
 			}
 		}
 	}
@@ -77,14 +82,14 @@ func initConfig() {
 	if core.FileExists(options.InputFile) {
 		options.Input = core.GetFileContent(options.Input)
 	}
-
 	// get input from a file or just a string
 	if core.FileExists(options.InputFile) {
 		options.Input = core.GetFileContent(options.InputFile)
 	}
+	if len(stdInputs) > 0 {
+		options.Inputs = append(options.Inputs, stdInputs...)
+	}
 
-	core.InforF("Metabigor %v by %v", core.VERSION, color.HiMagentaString(core.AUTHOR))
-	core.DebugF(fmt.Sprintf("Store log file to: %v", options.LogFile))
 }
 
 // RootMessage print help message
