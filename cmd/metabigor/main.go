@@ -1,10 +1,13 @@
 // Package main provides the entry point for the metabigor CLI application.
 package main
 
-import "github.com/j3ssie/metabigor/internal/cli"
+import (
+	"github.com/j3ssie/metabigor/internal/cli"
+	"github.com/j3ssie/metabigor/internal/core"
+)
 
 var (
-	version   = "v2.1.0"
+	version   = core.VERSION
 	commit    = "dev"
 	buildDate = "unknown"
 )

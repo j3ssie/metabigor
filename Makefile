@@ -1,6 +1,6 @@
 BINARY    := metabigor
 MODULE    := github.com/j3ssie/metabigor
-VERSION   := $(shell git describe --tags --always --dirty 2>/dev/null || echo "v2.1.0")
+VERSION   := $(shell cat internal/core/constants.go | grep 'VERSION =' | cut -d '"' -f 2)
 COMMIT    := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 BUILDDATE := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 LDFLAGS   := -s -w -X 'main.version=$(VERSION)' -X 'main.commit=$(COMMIT)' -X 'main.buildDate=$(BUILDDATE)'
