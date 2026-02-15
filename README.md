@@ -41,16 +41,6 @@ make build
 # binary at ./bin/metabigor
 ```
 
-### Setup
-
-Download the ASN database before using `net` or `ipc` commands:
-
-```bash
-metabigor update
-```
-
-This saves the database to `~/.metabigor/ip-asn-combined.csv`. Re-run periodically to keep it fresh.
-
 ## Commands
 
 ### `net` — Network Discovery
@@ -214,44 +204,6 @@ cat domains.txt | dnsx -silent -resp-only | metabigor cdn
 
 ```bash
 metabigor update
-```
-
-## Input Methods
-
-All commands accept input via three methods (combined and deduplicated):
-
-```bash
-# Stdin (pipe)
-echo "target" | metabigor <command>
-cat targets.txt | metabigor <command>
-
-# --input flag (long form)
-metabigor <command> --input "target"
-
-# -i flag (short form)
-metabigor <command> -i "target"
-
-# -I file flag
-metabigor <command> -I targets.txt
-
-# Silent mode (errors only, no progress messages)
-metabigor <command> -i "target" -q
-```
-
-## Pipeline Examples
-
-```bash
-# ASN -> CIDRs -> IP enrichment
-echo "AS13335" | metabigor net | metabigor ip --flat
-
-# Domain -> related domains -> cert search
-echo "target.com" | metabigor related -s crt | metabigor cert --clean
-
-# Find all open ports for an org's infrastructure
-echo "TargetCorp" | metabigor net --org | metabigor ip --flat -c 20
-
-# Cluster resolved IPs by ASN
-dig +short target.com A | metabigor ipc --json
 ```
 
 ## Painless integrate Metabigor into your recon workflow?
