@@ -1,4 +1,38 @@
-.DS_STORE
-.idea
+# If you prefer a global ignore file, keep this minimal.
+
+# Binaries
+bin/                # Correct location for local builds (make build)
+dist/**            # Cross-platform builds (make build-all, goreleaser)
+dist/config.yaml
+/metabigor         # WRONG location - ignore to prevent committing misplaced binary
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build artifacts
+*.test
+*.out
+*.cover
+coverage.out
+coverage.html
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.trae
+
+# cgo / compiler outputs
+*.o
+*.a
+*.obj
+
+# Logs
+*.log
+
+.agents
+.claude
 dist
-out*dist/
+bin

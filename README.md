@@ -1,7 +1,7 @@
 <p align="center">
   <img alt="Metabigor" src="https://user-images.githubusercontent.com/23289085/143042137-28f8e7e5-e485-4dc8-a09b-10759a593210.png" height="140" />
   <br />
-  <strong>Metabigor - An Intelligence Tool but without API key</strong>
+  <strong>Metabigor - OSINT power without API key hassle</strong>
 
   <p align="center">
   <a href="https://docs.osmedeus.org/donation/"><img src="https://img.shields.io/badge/Sponsors-0078D4?style=for-the-badge&logo=GitHub-Sponsors&logoColor=39ff14&labelColor=black&color=black"></a>
@@ -12,134 +12,247 @@
 
 ***
 
-# What is Metabigor?
+## What is Metabigor?
 
 Metabigor is Intelligence tool, its goal is to do OSINT tasks and more but without any API key.
 
-# Installation
+## Features
+
+- **Network Discovery** - Find IP ranges (CIDRs) from ASN, organization, domain, or IP address
+- **Certificate Transparency** - Discover subdomains via crt.sh certificate logs
+- **IP Enrichment** - Get port, service, and vulnerability data via Shodan InternetDB (free, no API key)
+- **GitHub Code Search** - Find secrets, credentials, and subdomains in public repositories via grep.app
+- **IP Clustering** - Group IPs by ASN for infrastructure mapping
+- **Related Domains** - Discover related domains via certificate logs, reverse WHOIS, and analytics tracking
+- **CDN/WAF Detection** - Identify if IPs are behind CDN or WAF providers
+
+## Installation
 
 ### Pre-built Binaries
 
 You can download pre-built binaries for your platform from the [**releases page**](https://github.com/j3ssie/metabigor/releases). Choose the appropriate binary for your operating system and architecture, download it, and place it in your `PATH`. 
 
-### Building from Source
-
-```shell
-go install github.com/j3ssie/metabigor@2.0.0
-```
-
-
-# Main features
-
-- Searching information about IP Address, ASN and Organization.
-- Wrapper for running rustscan, masscan and nmap more efficient on IP/CIDR.
-- Finding more related domains of the target by applying various techniques (certificate, whois, Google Analytics, etc).
-- Get Summary about IP address (powered by [**@thebl4ckturtle**](https://github.com/theblackturtle))
-
-# Usage
-
-## Discovery IP of a company/organization - `metabigor net`
-
-The difference between net and **netd** command is that **netd** will get the dynamic result from the third-party source
-while net command will get the static result from the database.
+### Build from repository
 
 ```bash
-# discovery IP of a company/organization
-echo "company" | metabigor net --org -o /tmp/result.txt
-
-# discovery IP of an ASN
-echo "ASN1111" | metabigor net --asn -o /tmp/result.txt
-cat list_of_ASNs | metabigor net --asn -o /tmp/result.txt
-
-echo "ASN1111" | metabigor netd --asn -o /tmp/result.txt
+git clone https://github.com/j3ssie/metabigor.git
+cd metabigor
+make build
+# binary at ./bin/metabigor
 ```
 
-*** 
+### Setup
 
-## Finding more related domains of the target by applying various techniques (certificate, whois, Google Analytics, etc) - `metabigor related`
-
-> Note some of the results are not 100% accurate. Please do a manual check first before put it directly to other tools
-> to scan.
-
-Some specific technique require different input so please see the usage of each technique.
-
-## Using certificate to find related domains on crt.sh
+Download the ASN database before using `net` or `ipc` commands:
 
 ```bash
-# Getting more related domains by searching for certificate info
-echo 'Target Inc' | metabigor cert --json | jq -r '.Domain' | unfurl format %r.%t | sort -u # this is old command
-
-# Getting more related domains by searching for certificate info
-echo 'example Inc' | metabigor related -s 'cert'
+metabigor update
 ```
 
-## Wrapper for running rustscan, masscan and nmap more efficient on IP/CIDR - `metabigor scan`
+This saves the database to `~/.metabigor/ip-asn-combined.csv`. Re-run periodically to keep it fresh.
 
-This command will require you to install `masscan`, `rustscan` and `nmap` first or at least the pre-scan result of them.
+## Commands
+
+### `net` — Network Discovery
+
+Discover CIDRs and network ranges for an ASN, IP, domain, or organization. Auto-detects input type.
 
 ```bash
-# Only run rustscan with full ports
-echo '1.2.3.4/24' | metabigor scan -o result.txt
+# Find CIDRs for an ASN
+echo "AS13335" | metabigor net
+metabigor net --input AS13335
 
-# Only run nmap detail scan based on pre-scan data
-echo '1.2.3.4:21' | metabigor scan -s
-cat list_of_ip_with_port.txt | metabigor scan -c 10 --8 -s -o result.txt
-cat list_of_ip_with_port.txt | metabigor scan -c 10 --tmp /tmp/raw-result/ -s -o result.txt
-echo '1.2.3.4 -> [80,443,2222]' | metabigor scan -R
+# Lookup which ASN owns an IP
+echo "1.1.1.1" | metabigor net --ip
 
-# Run rustscan with full ports and nmap detail scan based on pre-scan data
-echo '1.2.3.4/24' | metabigor scan --pipe | metabigor scan -R 
+# Find CIDRs associated with a domain
+echo "cloudflare.com" | metabigor net --domain
+
+# Search by organization name
+echo "Cloudflare" | metabigor net --org
+
+# Use live online sources instead of local DB
+echo "AS13335" | metabigor net --dynamic
+
+# Batch input from file
+metabigor net -I asn-list.txt -o results.txt
+
+# Force input type with override flags
+echo "13335" | metabigor net --asn
 ```
 
-***
+### `cert` — Certificate Transparency Search
 
-## Using Reverse Whois to find related domains
+Query crt.sh for domains and certificates.
 
 ```bash
-echo 'example.com' | metabigor related -s 'whois'
+# Find domains in certificate transparency logs
+echo "hackerone.com" | metabigor cert
+
+# Search by organization name
+echo "HackerOne Inc" | metabigor cert
+
+# Strip wildcard prefixes (*.) from results
+echo "example.com" | metabigor cert --clean
+
+# Show only wildcard entries
+echo "example.com" | metabigor cert --wildcard
+
+# JSON output
+echo "example.com" | metabigor cert --json
+
+# Save to file
+echo "example.com" | metabigor cert --clean -o domains.txt
 ```
 
-## Getting more related by searching for Google Analytics ID
+### `ip` — IP Enrichment (Shodan InternetDB)
+
+Query Shodan's free InternetDB API for open ports, hostnames, vulnerabilities, and tags.
 
 ```bash
-# Get it directly from the URL
-echo 'https://example.com' | metabigor related -s 'google-analytic'
+# Lookup a single IP
+echo "1.1.1.1" | metabigor ip
 
-# You can also search it directly from the UA ID too
-metabigor related -s 'google-analytic' -i 'UA-9152XXX' --debug
+# Scan a CIDR range (auto-expands)
+echo "1.1.1.0/28" | metabigor ip
+
+# Flat IP:PORT output (useful for piping to other tools)
+echo "1.1.1.0/28" | metabigor ip --flat
+
+# CSV output
+echo "1.1.1.0/28" | metabigor ip --csv
+
+# JSON output
+echo "1.1.1.1" | metabigor ip --json
+
+# Bulk scan from file with higher concurrency
+metabigor ip -I ips.txt -c 20 --flat -o open-ports.txt
 ```
 
-*** 
+### `github` — Code Search (grep.app)
 
-## Get Summary about IP address (powered by [**@thebl4ckturtle**](https://github.com/theblackturtle)) - `metabigor ipc`
-
-This will show you the summary of the IP address provided like ASN, Organization, Country, etc.
+Search public GitHub code via grep.app.
 
 ```bash
-cat list_of_ips.txt | metabigor ipc --json
+# Search for a domain in code
+echo "hackerone.com" | metabigor github
+
+# Search for API keys or secrets patterns
+echo "AKIA" | metabigor github
+
+# Paginate results
+echo "example.com" | metabigor github --page 2
+
+# JSON output with repo, path, snippet
+echo "example.com" | metabigor github --json
+
+# Save results
+echo "target.com" | metabigor github -o github-results.txt
 ```
 
-## Extract Shodan IPInfo from internetdb.shodan.io
+### `ipc` — IP Clustering
+
+Group a list of IPs by ASN using the local database. Useful for understanding the infrastructure behind a set of IPs.
 
 ```bash
-echo '1.2.3.4' | metabigor ip -open
-1.2.3.4:80
-1.2.3.4:443
+# Cluster IPs from stdin
+cat ips.txt | metabigor ipc
 
-# lookup CIDR range
-echo '1.2.3.4/24' | metabigor ip -open -c 20
-1.2.3.4:80
-1.2.3.5:80
+# JSON output with full details
+cat ips.txt | metabigor ipc --json
 
-# get raw JSON response
-echo '1.2.3.4' | metabigor ip -json
+# From file
+metabigor ipc -I ips.txt -o clusters.txt
 ```
 
-# Demo
+### `related` — Related Domain Discovery
 
-[![asciicast](https://asciinema.org/a/301745.svg)](https://asciinema.org/a/301745)
+Find domains related to a target via multiple OSINT sources.
 
-*** 
+```bash
+# Use all sources (crt.sh, WHOIS, analytics)
+echo "hackerone.com" | metabigor related
+
+# Certificate transparency only
+echo "hackerone.com" | metabigor related -s crt
+
+# Reverse WHOIS via viewdns.info
+echo "hackerone.com" | metabigor related -s whois
+
+# Google Analytics / GTM correlation
+echo "hackerone.com" | metabigor related -s ua
+
+# Save results
+echo "target.com" | metabigor related -o related-domains.txt
+```
+
+### `cdn` — CDN/WAF Detection
+
+Check if IPs belong to CDN or WAF providers. Shows vendor and type by default.
+
+```bash
+# Check if IP is behind CDN/WAF (shows vendor and type)
+echo "1.1.1.1" | metabigor cdn
+
+# Check multiple IPs from file
+cat ips.txt | metabigor cdn
+
+# Strip CDN/WAF IPs from output (show only non-CDN IPs)
+cat ips.txt | metabigor cdn --strip-cdn
+
+# JSON output with full details
+echo "1.1.1.1" | metabigor cdn --json
+
+# Find origin servers (non-CDN IPs only)
+cat ips.txt | metabigor cdn --strip-cdn -o origin-ips.txt
+
+# Pipeline: Resolve domains then check for CDN
+cat domains.txt | dnsx -silent -resp-only | metabigor cdn
+```
+
+### `update` — Update ASN Database
+
+```bash
+metabigor update
+```
+
+## Input Methods
+
+All commands accept input via three methods (combined and deduplicated):
+
+```bash
+# Stdin (pipe)
+echo "target" | metabigor <command>
+cat targets.txt | metabigor <command>
+
+# --input flag (long form)
+metabigor <command> --input "target"
+
+# -i flag (short form)
+metabigor <command> -i "target"
+
+# -I file flag
+metabigor <command> -I targets.txt
+
+# Silent mode (errors only, no progress messages)
+metabigor <command> -i "target" -q
+```
+
+## Pipeline Examples
+
+```bash
+# ASN -> CIDRs -> IP enrichment
+echo "AS13335" | metabigor net | metabigor ip --flat
+
+# Domain -> related domains -> cert search
+echo "target.com" | metabigor related -s crt | metabigor cert --clean
+
+# Find all open ports for an org's infrastructure
+echo "TargetCorp" | metabigor net --org | metabigor ip --flat -c 20
+
+# Cluster resolved IPs by ASN
+dig +short target.com A | metabigor ipc --json
+```
 
 ## Painless integrate Metabigor into your recon workflow?
 
@@ -152,8 +265,17 @@ echo '1.2.3.4' | metabigor ip -json
 
 # Credits
 
-Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg)
-by [freepik](https://www.flaticon.com/authors/freepik)
+Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg) by [freepik](https://www.flaticon.com/authors/freepik)
+
+## 📊 Data Sources
+- **Local Database** - IP-to-ASN and IP-to-Country mappings (2M+ entries)
+- **crt.sh** - Certificate Transparency logs
+- **Shodan InternetDB** - Free IP enrichment API
+- **grep.app** - GitHub code search
+- **bgp.he.net** - Live BGP routing data
+- **viewdns.info** - Reverse WHOIS lookups
+- **builtwith.com** - Analytics tracking correlation
+- **projectdiscovery/cdncheck** - CDN/WAF detection library
 
 # Disclaimer
 
@@ -162,7 +284,7 @@ any laws while using this software, it's your fault, and your fault only.
 
 # License
 
-`Metabigor` is made with ♥ by [@j3ssiejjj](https://twitter.com/j3ssiejjj) and it is released under the MIT license.
+`Metabigor` is made with ♥ by [@j3ssie](https://twitter.com/j3ssie) and it is released under the MIT license.
 
 # Donation
 

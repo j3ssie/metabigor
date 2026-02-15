@@ -1,0 +1,133 @@
+# GoReleaser configuration for metabigor
+# See https://goreleaser.com for documentation
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: metabigor
+    main: ./cmd/metabigor
+    binary: metabigor
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.buildDate={{.Date}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+    hooks:
+      post:
+        # UPX compress binaries after build (requires upx installed)
+        # Use --best for maximum compression, --lzma for best ratio
+        # Skip macOS arm64 as UPX doesn't support it well
+        - cmd: sh -c 'if command -v upx >/dev/null 2>&1; then if [ "{{ .Os }}" = "darwin" ] && [ "{{ .Arch }}" = "arm64" ]; then echo "Skipping UPX for macOS ARM64"; else upx --best --lzma "{{ .Path }}" || echo "UPX failed, continuing"; fi; else echo "UPX not installed, skipping"; fi'
+
+archives:
+  - id: metabigor
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - CLAUDE.md
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Refactors'
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: j3ssie
+    name: metabigor
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## metabigor {{ .Version }}
+
+    **Full Changelog**: https://github.com/j3ssie/metabigor/compare/{{ .PreviousTag }}...{{ .Tag }}
+  footer: |
+    ## Installation
+
+    ### Binary
+
+    Download the pre-compiled binary for your platform from the assets below.
+
+    **Note:** Binaries are compressed with UPX for reduced size.
+
+    ### Go Install
+
+    ```bash
+    go install github.com/j3ssie/metabigor/cmd/metabigor@{{ .Tag }}
+    ```
+
+    ### Docker
+
+    ```bash
+    docker pull ghcr.io/j3ssie/metabigor:{{ .Tag }}
+    ```
+
+    ---
+
+    **Thanks to all contributors!** 🎉
