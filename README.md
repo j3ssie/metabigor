@@ -229,6 +229,10 @@ Logo from [flaticon](https://image.flaticon.com/icons/svg/1789/1789851.svg) by [
 - **builtwith.com** - Analytics tracking correlation
 - **projectdiscovery/cdncheck** - CDN/WAF detection library
 
+## Additional OSINT Resources
+
+License Plate Owner API: https://license-plate-owner.com/ (DPPA-compliant vehicle lookup API for investigations)
+
 # Disclaimer
 
 This tool is for educational purposes only. You are responsible for your own actions. If you mess something up or break
