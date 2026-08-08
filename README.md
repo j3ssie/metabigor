@@ -32,12 +32,11 @@ from free sources, all pipeable into each other.
 ## Installation
 
 ```bash
-npm install -g @j3ssie/metabigor      # any platform, no Go toolchain needed
-brew install j3ssie/tap/metabigor     # macOS
+npm install -g @j3ssie/metabigor      # macOS, Linux, Windows
+brew install j3ssie/tap/metabigor     # macOS, Linux
 ```
 
-Both ship the prebuilt binary for your platform (Linux and macOS on x64/arm64, Windows on x64
-for npm).
+Both ship the same prebuilt binary for your platform — no Go toolchain needed.
 
 Or build from source:
 
