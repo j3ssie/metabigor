@@ -15,19 +15,19 @@
 ## What is Metabigor?
 
 Metabigor maps a target's infrastructure without asking you to register for a single API key.
-Network ranges, certificates, related domains, exposed ports, CDN vendors, and code leaks — all
+Network ranges, certificates, related domains, exposed ports, CDN vendors, and code leaks - all
 from free sources, all pipeable into each other.
 
 ## Features
 
-- **Network Discovery** — find IP ranges (CIDRs) from an ASN, organization, domain, or IP
-- **Certificate Transparency** — discover subdomains via crt.sh
-- **IP Enrichment** — ports, hostnames, and CVEs via Shodan InternetDB (free, no key)
-- **GitHub Code Search** — find secrets, credentials, and subdomains in public repos via grep.app
-- **IP Clustering** — group IPs by ASN to map infrastructure
-- **Related Domains** — pivot via certificate logs, reverse WHOIS, and analytics IDs
-- **CDN/WAF Detection** — separate protected addresses from candidate origins
-- **URL Collection** — every URL the web archives have seen, including endpoints mined from WARCs
+- **Network Discovery** - find IP ranges (CIDRs) from an ASN, organization, domain, or IP
+- **Certificate Transparency** - discover subdomains via crt.sh
+- **IP Enrichment** - ports, hostnames, and CVEs via Shodan InternetDB (free, no key)
+- **GitHub Code Search** - find secrets, credentials, and subdomains in public repos via grep.app
+- **IP Clustering** - group IPs by ASN to map infrastructure
+- **Related Domains** - pivot via certificate logs, reverse WHOIS, and analytics IDs
+- **CDN/WAF Detection** - separate protected addresses from candidate origins
+- **URL Collection** - every URL the web archives have seen, including endpoints mined from WARCs
 
 ## Installation
 
@@ -36,7 +36,7 @@ npm install -g @j3ssie/metabigor      # macOS, Linux, Windows
 brew install j3ssie/tap/metabigor     # macOS, Linux
 ```
 
-Both ship the same prebuilt binary for your platform — no Go toolchain needed.
+Both ship the same prebuilt binary for your platform - no Go toolchain needed.
 
 Or build from source:
 
@@ -122,7 +122,7 @@ cat domains.txt | dnsx -silent -resp-only | metabigor cdn --exclude
 
 ## Commands
 
-### `net` — Network Discovery
+### `net` - Network Discovery
 
 Find the CIDRs behind an ASN, IP, domain, or organization. Uses the bundled offline database.
 
@@ -137,7 +137,7 @@ metabigor net -I asn-list.txt -f csv -o ranges.csv
 The target type is auto-detected. Override it with `--asn`, `--ip`, `--domain`, or `--org`
 (mutually exclusive). `--detail` adds ASN, organization, and country columns.
 
-### `cert` — Certificate Transparency
+### `cert` - Certificate Transparency
 
 ```bash
 metabigor cert hackerone.com                # one domain per line
@@ -148,7 +148,7 @@ metabigor cert example.com --detail         # cert IDs, issuers, validity dates
 metabigor cert tesla.com | dnsx -silent
 ```
 
-### `ip` — IP Enrichment (Shodan InternetDB)
+### `ip` - IP Enrichment (Shodan InternetDB)
 
 ```bash
 metabigor ip 1.1.1.1                        # ports, hostnames, CVEs
@@ -159,7 +159,7 @@ metabigor ip -I ips.txt -c 30 -f csv -o ports.csv
 
 IPs InternetDB knows nothing about are skipped; pass `--all` to keep them.
 
-### `github` — Code Search (grep.app)
+### `github` - Code Search (grep.app)
 
 ```bash
 metabigor github hackerone.com              # repo and path per match
@@ -168,10 +168,10 @@ metabigor github "api_key=" --detail        # show the matching code
 metabigor github AKIA --pages 3 --detail
 ```
 
-Requires Chrome or Chromium — grep.app answers plain HTTP clients with a bot challenge.
+Requires Chrome or Chromium - grep.app answers plain HTTP clients with a bot challenge.
 Searches run one at a time regardless of `-c`, to respect grep.app's rate limit.
 
-### `cluster` — IP Clustering
+### `cluster` - IP Clustering
 
 Group IPs by the ASN that owns them, largest cluster first. Accepts IPs or CIDRs. Works offline.
 
@@ -181,7 +181,7 @@ metabigor cluster -I ips.txt -f csv -o clusters.csv
 cat domains.txt | dnsx -silent -resp-only | metabigor cluster
 ```
 
-### `related` — Related Domain Discovery
+### `related` - Related Domain Discovery
 
 ```bash
 metabigor related hackerone.com             # all sources
@@ -193,7 +193,7 @@ Sources: `crt` (crt.sh), `whois` (viewdns.info reverse WHOIS), `analytics` (shar
 Analytics / Tag Manager IDs), or `all`. Results are deduplicated across sources and tagged with
 the source that found them first.
 
-### `url` — URL Collection from Web Archives
+### `url` - URL Collection from Web Archives
 
 ```bash
 metabigor url hackerone.com                       # every keyless source, subdomains included
@@ -211,11 +211,11 @@ join in automatically when `VT_API_KEY` / `INTELX_API_KEY` are present in the en
 `URLSCAN_API_KEY` raises urlscan's page size. Naming a credentialed source without its key is an
 error rather than a silent skip.
 
-**Subdomains are included by default** — the query is `*.target`, not `target`. This is the single
+**Subdomains are included by default** - the query is `*.target`, not `target`. This is the single
 biggest lever on how much a run returns; `--no-subs` narrows it.
 
 **GhostArchive is mined, not just listed.** Every archived page also has a raw WARC, and a WARC
-records every sub-request the browser made while capturing the page — XHR calls, JSON endpoints,
+records every sub-request the browser made while capturing the page - XHR calls, JSON endpoints,
 dynamically built script URLs. None of that appears in a CDX index, which only indexes captures of
 the page URL itself. In testing, 8 requests against `tesla.com` returned 147 URLs including live
 JSON API endpoints. Bound the cost with `--limit-requests`.
@@ -226,7 +226,7 @@ and Common Crawl APIs server-side and re-checked locally; `--blacklist` and `--n
 local. `--limit-requests` caps requests per source and `--limit-collections` sets how deep into
 Common Crawl's ~126 index collections to search (`0` for all of them, back to 2008).
 
-### `cdn` — CDN/WAF Detection
+### `cdn` - CDN/WAF Detection
 
 ```bash
 metabigor cdn 1.1.1.1                       # vendor and type
@@ -234,7 +234,7 @@ cat ips.txt | metabigor cdn --exclude       # candidate origins
 cat ips.txt | metabigor cdn --only          # only protected addresses
 ```
 
-### `update` — Refresh Local Databases
+### `update` - Refresh Local Databases
 
 ```bash
 metabigor update
@@ -243,7 +243,7 @@ metabigor update
 Refreshes both the IP-to-ASN and IP-to-country databases in `~/.metabigor`. A copy ships with the
 binary and unpacks on first use, so this is only needed to pick up newer routing data.
 
-### `skills` — Coding-Agent Skills
+### `skills` - Coding-Agent Skills
 
 Metabigor ships an [agentskills.io](https://agentskills.io) skill that teaches an AI coding agent
 (Claude Code, Codex, or any compatible agent) how to drive the CLI. The skill is embedded in the
@@ -259,7 +259,7 @@ metabigor skills install --dir ./skills     # install into a directory you choos
 ```
 
 `get` prints the raw Markdown to stdout (pipe it, or use `-o` to save it). `install` copies the
-whole bundle — `SKILL.md` plus its `references/` — and skips an existing copy unless you pass
+whole bundle - `SKILL.md` plus its `references/` - and skips an existing copy unless you pass
 `--force`. Once installed, the agent auto-triggers on the skill whenever you mention metabigor.
 
 ## Global flags
@@ -284,7 +284,7 @@ Metabigor exits non-zero on failure, so it composes with `&&`, `set -e`, and CI.
 
 ## Upgrading from v2
 
-v3 renames flags and commands for consistency. There are no aliases — update your scripts.
+v3 renames flags and commands for consistency. There are no aliases - update your scripts.
 
 | v2 | v3 | Why |
 |---|---|---|
