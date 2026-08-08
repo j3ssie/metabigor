@@ -47,11 +47,11 @@ builds:
 
 archives:
   - id: metabigor
-    format: tar.gz
+    formats: [tar.gz]
     name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     files:
       - LICENSE
       - README.md
@@ -95,6 +95,39 @@ changelog:
       order: 3
     - title: Others
       order: 999
+
+# Homebrew tap: pushes a cask to github.com/j3ssie/homebrew-tap on every
+# release, so `brew install j3ssie/tap/metabigor` tracks the newest version.
+# GITHUB_TOKEN needs write access to the tap repo as well as to this one.
+#
+# Casks rather than the older `brews` formulas: goreleaser deprecated `brews`,
+# and Homebrew now expects prebuilt binaries to ship as casks. Casks are macOS
+# only — Linux users install via `npm install -g @j3ssie/metabigor` or the
+# release archives.
+homebrew_casks:
+  - name: metabigor
+    binaries:
+      - metabigor
+    repository:
+      owner: j3ssie
+      name: homebrew-tap
+      branch: main
+    homepage: "https://github.com/j3ssie/metabigor"
+    description: "OSINT power without API key hassle"
+    license: "MIT"
+    commit_author:
+      name: j3ssie
+      email: j3ssiejjj@gmail.com
+    hooks:
+      post:
+        # The release binaries are unsigned and unnotarized, so macOS quarantines
+        # anything downloaded by brew and the first run dies with "cannot be
+        # opened because the developer cannot be verified". Strip the flag at
+        # install time.
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/metabigor"]
+          end
 
 release:
   github:

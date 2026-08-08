@@ -190,12 +190,16 @@ make bump-version                  # v2.2.0 -> v2.2.1 in constants.go
                                    #   PART=minor|major|pre|release, LABEL=beta, SET=v2.3.0
 git commit -am "Release v2.2.1"    # goreleaser refuses a dirty worktree
 make npm-publish                   # -> npm  (needs NPM_TOKEN; DRY_RUN=1 to preview)
-make github-release                # -> tag + GitHub release (needs GITHUB_TOKEN)
+make github-release                # -> tag + GitHub release + Homebrew tap (needs GITHUB_TOKEN)
 ```
 
 `npm-publish` rebuilds the binaries via `make snapshot` whenever `dist/` is empty or was built
 for a different version, so a bump can never ship a stale binary under a fresh npm version
 (npm versions are immutable — a bad publish cannot be replaced, only deprecated).
+
+`github-release` also pushes a Homebrew cask to `j3ssie/homebrew-tap` (the `homebrew_casks`
+block in `.goreleaser.yaml`), so `GITHUB_TOKEN` needs write access to that repo as well as this
+one. The cask is generated on every release — never hand-edit `Casks/metabigor.rb` in the tap.
 
 Update README.md with any new features before bumping.
 
