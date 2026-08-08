@@ -10,20 +10,22 @@ import (
 
 // IPCluster represents a group of IPs sharing the same ASN.
 type IPCluster struct {
-	ASN         string `json:"asn"`
-	CIDR        string `json:"cidr"`
-	Count       int    `json:"count"`
-	Description string `json:"description"`
-	CountryCode string `json:"country_code"`
+	ASN         string   `json:"asn"`
+	CIDR        string   `json:"cidr"`
+	Count       int      `json:"count"`
+	Description string   `json:"description"`
+	CountryCode string   `json:"country_code"`
 	IPs         []string `json:"ips,omitempty"`
 }
 
 // ClusterIPs groups a list of IPs by their ASN using the local database.
+// CIDRs are accepted too, so `metabigor net ... | metabigor cluster` works
+// without an intermediate expansion step.
 func ClusterIPs(db *asndb.DB, ips []string) []IPCluster {
 	clusters := make(map[string]*IPCluster)
 
 	for _, ip := range ips {
-		rec := db.LookupIP(ip)
+		rec := db.LookupTarget(ip)
 		if rec == nil {
 			key := "unknown"
 			if c, ok := clusters[key]; ok {

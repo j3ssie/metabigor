@@ -8,82 +8,94 @@ import (
 	"github.com/j3ssie/metabigor/internal/output"
 )
 
-// DynamicLookup queries live online sources for ASN/CIDR data.
-func DynamicLookup(client *retryablehttp.Client, input string, timeoutSec int) []string {
-	inputType := DetectType(input)
-	var allResults []string
+// LiveLookup queries live online sources for ASN/CIDR data. Pass TypeUnknown to
+// auto-detect the input type.
+func LiveLookup(client *retryablehttp.Client, input string, forceType InputType, timeoutSec int) []Result {
+	if forceType == TypeUnknown {
+		forceType = DetectType(input)
+	}
+	output.Info("Live lookup for %q (as %s)", input, forceType)
+
+	var results []Result
 	seen := make(map[string]bool)
 
-	add := func(source string, results []string) {
+	add := func(source string, batch []Result) {
 		added := 0
-		for _, r := range results {
-			r = strings.TrimSpace(r)
-			if r != "" && !seen[r] {
-				seen[r] = true
-				allResults = append(allResults, r)
-				added++
+		for _, r := range batch {
+			key := r.Value()
+			if key == "" || seen[key] {
+				continue
 			}
+			seen[key] = true
+			r.Input = input
+			r.Source = source
+			results = append(results, r)
+			added++
 		}
-		output.Verbose("Source %s returned %d new results (%d total from source)", source, added, len(results))
+		output.Verbose("%s returned %d new result(s) of %d", source, added, len(batch))
 	}
 
-	output.Info("Dynamic lookup for %q (detected type: %s)", input, inputType)
-
-	switch inputType {
+	switch forceType {
 	case TypeASN:
 		output.Verbose("Querying asnlookup.com for %s ...", input)
-		add("asnlookup.com", queryASNLookup(client, input))
+		add("asnlookup.com", cidrResults(queryASNLookup(client, input)))
 
-	case TypeIP:
-		output.Verbose("Querying ipinfo.io for %s ...", input)
-		add("ipinfo.io", queryIPInfo(client, input, timeoutSec))
-
-	case TypeDomain:
-		output.Verbose("Querying bgp.he.net for %s ...", input)
-		bgpResults := queryBGPHE(client, input, timeoutSec)
-		add("bgp.he.net", extractResultStrings(bgpResults))
-
-	case TypeOrg:
-		output.Verbose("Querying bgp.he.net for %q ...", input)
-		bgpResults := queryBGPHE(client, input, timeoutSec)
-		add("bgp.he.net", extractResultStrings(bgpResults))
-	}
-
-	if len(allResults) == 0 {
-		output.Warn("Dynamic lookup for %q returned no results", input)
-	} else {
-		output.Good("Dynamic lookup for %q: %d total results", input, len(allResults))
-	}
-
-	return allResults
-}
-
-// extractResultStrings converts BGPHEResult to strings for backward compatibility
-func extractResultStrings(results []BGPHEResult) []string {
-	strs := make([]string, len(results))
-	for i, r := range results {
-		strs[i] = r.Result
-	}
-	return strs
-}
-
-// DynamicLookupDetailed returns structured BGP results with all metadata
-func DynamicLookupDetailed(client *retryablehttp.Client, input string, timeoutSec int) []BGPHEResult {
-	inputType := DetectType(input)
-
-	output.Info("Dynamic detailed lookup for %q (detected type: %s)", input, inputType)
-
-	switch inputType {
-	case TypeDomain, TypeOrg:
-		results := queryBGPHE(client, input, timeoutSec)
+		// asnlookup.com sits behind a bot challenge that plain HTTP clients
+		// cannot clear, so fall back to bgp.he.net, which Chrome can reach.
 		if len(results) == 0 {
-			output.Warn("Dynamic lookup for %q returned no results", input)
-		} else {
-			output.Good("Dynamic lookup for %q: %d results", input, len(results))
+			output.Verbose("asnlookup.com returned nothing, falling back to bgp.he.net ...")
+			add("bgp.he.net", bgpResults(queryBGPHE(client, input, timeoutSec)))
 		}
-		return results
-	default:
-		output.Warn("Detailed lookup only supported for domain/org inputs")
-		return nil
+
+	case TypeIP, TypeCIDR:
+		output.Verbose("Querying ipinfo.io for %s ...", input)
+		add("ipinfo.io", cidrResults(queryIPInfo(client, input, timeoutSec)))
+
+	case TypeDomain, TypeOrg:
+		output.Verbose("Querying bgp.he.net for %q ...", input)
+		add("bgp.he.net", bgpResults(queryBGPHE(client, input, timeoutSec)))
 	}
+
+	if len(results) == 0 {
+		output.Warn("Live lookup for %q returned no results", input)
+	} else {
+		output.Good("Live lookup for %q: %d result(s)", input, len(results))
+	}
+	return results
+}
+
+// cidrResults wraps bare CIDR strings from the simpler sources.
+func cidrResults(cidrs []string) []Result {
+	results := make([]Result, 0, len(cidrs))
+	for _, c := range cidrs {
+		if c = strings.TrimSpace(c); c != "" {
+			results = append(results, Result{CIDR: c})
+		}
+	}
+	return results
+}
+
+// bgpResults maps bgp.he.net rows, which mix ASNs and routes, onto Result.
+// Rows are already filtered by validBGPRows; anything else is skipped rather
+// than guessed at.
+func bgpResults(rows []BGPHEResult) []Result {
+	results := make([]Result, 0, len(rows))
+	for _, row := range rows {
+		value := strings.TrimSpace(row.Result)
+		if !isNetworkValue(value) {
+			continue
+		}
+
+		r := Result{Org: row.Description}
+		if asnPattern.MatchString(value) {
+			r.ASN = strings.ToUpper(value)
+		} else {
+			r.CIDR = value
+		}
+		if row.Country != "" && row.Country != "Unknown" {
+			r.Country = row.Country
+		}
+		results = append(results, r)
+	}
+	return results
 }

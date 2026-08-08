@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/j3ssie/metabigor/internal/httpclient"
@@ -58,30 +57,6 @@ func ExpandCIDR(cidr string) []string {
 		result = append(result, ip.String())
 	}
 	return result
-}
-
-// FormatFlat formats a result as IP:PORT lines.
-func FormatFlat(r *InternetDBResult) []string {
-	var lines []string
-	for _, port := range r.Ports {
-		lines = append(lines, fmt.Sprintf("%s:%d", r.IP, port))
-	}
-	return lines
-}
-
-// FormatCSV formats a result as a CSV line.
-func FormatCSV(r *InternetDBResult) string {
-	ports := make([]string, len(r.Ports))
-	for i, p := range r.Ports {
-		ports[i] = fmt.Sprintf("%d", p)
-	}
-	return fmt.Sprintf("%s,%s,%s,%s,%s",
-		r.IP,
-		strings.Join(ports, ";"),
-		strings.Join(r.Hostnames, ";"),
-		strings.Join(r.Vulns, ";"),
-		strings.Join(r.Tags, ";"),
-	)
 }
 
 // IsCIDR checks whether the input is a CIDR notation.

@@ -3,28 +3,19 @@ package cli
 import (
 	"fmt"
 
+	"github.com/j3ssie/metabigor/internal/core"
 	"github.com/spf13/cobra"
 )
 
-const (
-	// AppName is the name of the application
-	AppName = "metabigor"
-	// AppVersion is the current version
-	AppVersion = "v2.1.0"
-	// Author is the author of the application
-	Author = "@j3ssie"
-)
-
 var (
-	appVersion   = AppVersion
 	appCommit    = "none"
 	appBuildDate = "unknown"
 )
 
-// SetVersion sets the version info from ldflags.
+// SetVersion overrides the build metadata baked in via ldflags.
 func SetVersion(version, commit, buildDate string) {
 	if version != "" {
-		appVersion = version
+		rootCmd.Version = version
 	}
 	if commit != "" {
 		appCommit = commit
@@ -34,20 +25,25 @@ func SetVersion(version, commit, buildDate string) {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(versionCmd)
+var versionCmd = &cobra.Command{
+	Use:     "version",
+	Short:   "Print version and build information",
+	Long:    "Print the version, build date, commit hash, and author.",
+	GroupID: groupUtil,
+	Args:    cobra.NoArgs,
+	Example: examples(
+		"show full build information", "metabigor version",
+		"show just the version", "metabigor --version",
+	),
+	Run: func(_ *cobra.Command, _ []string) {
+		fmt.Printf("%s - %s\n", core.NAME, core.DESC)
+		fmt.Printf("Version: %s\n", rootCmd.Version)
+		fmt.Printf("Build:   %s\n", appBuildDate)
+		fmt.Printf("Commit:  %s\n", appCommit)
+		fmt.Printf("Author:  %s\n", core.AUTHOR)
+	},
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print version information",
-	Long:  versionLong,
-	// Example is set in helptext.go init()
-	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("%s - OSINT power without API key hassle\n", AppName)
-		fmt.Printf("Version: %s\n", appVersion)
-		fmt.Printf("Build: %s\n", appBuildDate)
-		fmt.Printf("Commit: %s\n", appCommit)
-		fmt.Printf("Author: %s\n", Author)
-	},
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }

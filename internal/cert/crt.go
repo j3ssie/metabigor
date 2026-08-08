@@ -41,6 +41,11 @@ type DomainGroup struct {
 	LastExpires string   `json:"last_expires,omitempty"` // Latest NotAfter
 	Issuers     []string `json:"issuers,omitempty"`      // Unique issuers
 	CommonNames []string `json:"common_names,omitempty"` // Associated CNs
+
+	// Detail expands the text rendering from a bare domain to a full
+	// certificate block. It is a presentation switch, so it stays out of
+	// JSON and CSV output.
+	Detail bool `json:"-"`
 }
 
 // SearchCRT queries crt.sh and returns certificate entries.

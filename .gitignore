@@ -36,3 +36,6 @@ coverage.html
 .claude
 dist
 bin
+
+# npm packaging output (make npm-build / npm-pack)
+build/dist-npm/

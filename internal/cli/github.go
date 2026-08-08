@@ -1,11 +1,9 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/glamour"
 	"github.com/j3ssie/metabigor/internal/gitsearch"
 	"github.com/j3ssie/metabigor/internal/httpclient"
 	"github.com/j3ssie/metabigor/internal/output"
@@ -13,114 +11,93 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// pageDelay paces grep.app pagination so a long search is not throttled.
+const pageDelay = 5 * time.Second
+
+const githubLong = `Search public GitHub code through grep.app to surface leaked hostnames,
+credentials, and API keys.
+
+Prints one repo and path per match. Add --subs to extract only the subdomains
+mentioned in the matches, or --detail to see the matching code.
+
+Requires Chrome or Chromium: grep.app answers plain HTTP clients with a bot
+challenge, so queries are driven through headless Chrome. Searches run one at a
+time regardless of --concurrency, to stay within grep.app's rate limit.`
+
+var githubCmd = &cobra.Command{
+	Use:         "github [query...]",
+	Short:       "Search public GitHub code for leaks (via grep.app)",
+	Long:        githubLong,
+	GroupID:     groupRecon,
+	Annotations: map[string]string{"sample": "example.com"},
+	Example: examples(
+		"find code mentioning a domain", "metabigor github hackerone.com",
+		"pass the query with a flag instead", "metabigor github -i hackerone.com",
+		"pull out the subdomains in those matches", "metabigor github tesla.com --subs",
+		"show the matching code", "metabigor github -i \"api_key=\" --detail",
+		"hunt for AWS keys, first 3 pages", "metabigor github AKIA --pages 3 --detail",
+		"run a list of search terms from a file", "metabigor github -I keywords.txt -f json -o hits.json",
+		"use -i when the query starts with a dash", "metabigor github -i \"--endpoint-url\"",
+	),
+	RunE: runGithub,
+}
+
 func init() {
-	githubCmd.Flags().BoolVar(&opt.Github.Detail, "detail", false, "Show formatted code snippets with repo, path, and content")
-	githubCmd.Flags().IntVar(&opt.Github.Page, "page", 0, "Maximum number of pages to fetch (0 = unlimited)")
+	f := githubCmd.Flags()
+	f.IntVar(&opt.Github.Pages, "pages", 0, "Maximum result pages to fetch (0 fetches all)")
+	f.BoolVar(&opt.Github.Subs, "subs", false, "Print only the subdomains found in matches")
+	f.BoolVarP(&opt.Github.Detail, "detail", "d", false, "Show the matching code snippet")
+
+	githubCmd.MarkFlagsMutuallyExclusive("subs", "detail")
 	rootCmd.AddCommand(githubCmd)
 }
 
-var githubCmd = &cobra.Command{
-	Use:   "github",
-	Short: "Search code on grep.app (GitHub code search)",
-	Long:  githubLong,
-	// Example is set in helptext.go init()
-	Run: runGithub,
-}
-
-func runGithub(_ *cobra.Command, args []string) {
-	output.SetupLogger(opt.Silent, opt.Debug, opt.NoColor)
-	inputs := runner.ReadInputs(opt.Input, opt.InputFile, args)
-	if len(inputs) == 0 {
-		output.Error("No input provided")
-		return
-	}
-
-	w, err := output.NewWriter(opt.Output, opt.JSONOutput)
+func runGithub(cmd *cobra.Command, _ []string) error {
+	rc, err := setup(cmd)
 	if err != nil {
-		output.Error("%v", err)
-		return
+		return err
 	}
-	defer w.Close()
+	defer rc.Close()
 
-	output.Info("Searching grep.app for %d query(ies)", len(inputs))
-	client := httpclient.NewClient(opt.Timeout, opt.Retry, opt.Proxy)
+	output.Info("Searching grep.app for %d query(ies)", len(rc.Inputs))
 
-	// Set up glamour renderer for --detail mode
-	var renderer *glamour.TermRenderer
-	if opt.Github.Detail && !opt.JSONOutput {
-		renderer, err = glamour.NewTermRenderer(glamour.WithAutoStyle(), glamour.WithWordWrap(120))
+	session, err := httpclient.NewChromeSession(opt.Timeout, opt.Proxy)
+	if err != nil {
+		return fmt.Errorf("grep.app needs headless Chrome to clear its bot challenge: %w", err)
+	}
+	defer session.Close()
+
+	// grep.app throttles aggressively, so queries run sequentially even when
+	// --concurrency is higher.
+	runner.RunParallel(rc.Inputs, 1, func(query string) {
+		hits, err := gitsearch.SearchAll(session, query, pageDelay, opt.Github.Pages)
 		if err != nil {
-			output.Debug("glamour init error: %v, falling back to plain", err)
+			output.Error("grep.app search for %q failed: %v", query, err)
+			// Fall through: any hits gathered before the failure are still useful.
 		}
-	}
-
-	runner.RunParallel(inputs, 1, func(query string) {
-		maxPages := opt.Github.Page
-		if maxPages == 0 {
-			output.Verbose("Querying grep.app for %q (auto-paginating with 5s delay, unlimited pages)", query)
-		} else {
-			output.Verbose("Querying grep.app for %q (max %d pages, 5s delay)", query, maxPages)
+		if len(hits) == 0 {
+			output.Verbose("No matches for %q", query)
+			return
 		}
-		hits := gitsearch.SearchAll(client, query, 5*time.Second, maxPages)
+		output.Verbose("grep.app returned %d hit(s) for %q", len(hits), query)
 
-		if opt.JSONOutput {
-			for _, h := range hits {
-				// Output raw JSON per hit with cleaned snippet
-				obj := map[string]any{
-					"owner_id":      h.OwnerID,
-					"repo":          h.Repo,
-					"branch":        h.Branch,
-					"path":          h.Path,
-					"content":       map[string]string{"snippet": h.CleanSnippet()},
-					"total_matches": h.TotalMatches,
-				}
-				data, _ := json.Marshal(obj)
-				w.WriteString(string(data))
+		if opt.Github.Subs {
+			subs := gitsearch.ExtractSubdomains(hits, query)
+			if len(subs) == 0 {
+				output.Verbose("No subdomains of %q appear in the matches", query)
+				return
+			}
+			output.Good("Found %d subdomain(s) of %q", len(subs), query)
+			for _, s := range subs {
+				rc.Writer.Write(gitsearch.Subdomain{Query: query, Domain: s})
 			}
 			return
 		}
 
-		if opt.Github.Detail {
-			for _, h := range hits {
-				// Use new ParseSnippet() instead of CleanSnippet()
-				snippet := h.ParseSnippet()
-
-				// Create header with metadata on one line
-				header := fmt.Sprintf("Repo: %s | Path: %s | Branch: %s | Matches: %s",
-					h.Repo, h.Path, h.Branch, h.TotalMatches)
-
-				// Format as markdown with code block for glamour
-				md := fmt.Sprintf("### %s\n---\n```\n%s\n```\n", header, snippet)
-
-				if renderer != nil {
-					rendered, err := renderer.Render(md)
-					if err == nil {
-						fmt.Print(rendered)
-						fmt.Println("---") // Separator between results
-						continue
-					}
-				}
-
-				// Fallback: plain text with clear formatting
-				fmt.Printf("%s\n---\n%s\n---\n\n", header, snippet)
-			}
-			return
-		}
-
-		// Default: extract subdomains matching the input domain
-		subdomains := gitsearch.ExtractSubdomains(hits, query)
-		if len(subdomains) > 0 {
-			output.Good("Found %d subdomain(s) matching %q", len(subdomains), query)
-			for _, s := range subdomains {
-				w.WriteString(s)
-			}
-		} else {
-			// If no subdomain matches, show repo|path summary
-			output.Verbose("No subdomain matches for %q, showing repo|path", query)
-			for _, h := range hits {
-				w.WriteString(fmt.Sprintf("%s | %s", h.Repo, h.Path))
-			}
+		for _, h := range hits {
+			h.Detail = opt.Github.Detail
+			rc.Writer.Write(h)
 		}
 	})
+	return nil
 }
-

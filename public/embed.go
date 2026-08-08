@@ -17,3 +17,10 @@ var CountryDB []byte
 //
 //go:embed *.zip
 var FS embed.FS
+
+// SkillsFS holds the coding-agent skill bundles shipped with the binary, under
+// the skills/ directory. Exposed through the `metabigor skills` command so the
+// bundled instructions always match the installed version.
+//
+//go:embed all:skills
+var SkillsFS embed.FS

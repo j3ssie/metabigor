@@ -2,108 +2,77 @@ package cli
 
 import (
 	"fmt"
-	"net"
-	"net/url"
-	"strings"
 
+	"github.com/j3ssie/metabigor/internal/cdn"
 	"github.com/j3ssie/metabigor/internal/output"
 	"github.com/j3ssie/metabigor/internal/runner"
 	"github.com/projectdiscovery/cdncheck"
 	"github.com/spf13/cobra"
 )
 
+const cdnLong = `Identify which IPs sit behind a CDN or WAF, and which do not.
+
+Accepts bare IPs or URLs. Use --exclude to strip CDN and WAF addresses from a
+list, leaving the candidate origin servers, or --only to keep just the
+protected ones.`
+
+var cdnCmd = &cobra.Command{
+	Use:         "cdn [target...]",
+	Short:       "Detect whether IPs are behind a CDN or WAF",
+	Long:        cdnLong,
+	GroupID:     groupEnrich,
+	Annotations: map[string]string{"sample": "1.1.1.1"},
+	Example: examples(
+		"show the vendor and type for an IP", "metabigor cdn 1.1.1.1",
+		"pass the target with a flag instead", "metabigor cdn -i 1.1.1.1 -f json",
+		"classify several addresses at once", "metabigor cdn 1.1.1.1 8.8.8.8",
+		"hunt for origin servers in a file", "metabigor cdn -I ips.txt --exclude -o origins.txt",
+		"keep only the protected addresses", "metabigor cdn -I ips.txt --only",
+		"or read the list from stdin", "cat ips.txt | metabigor cdn",
+		"resolve domains, then classify them", "cat domains.txt | dnsx -silent -resp-only | metabigor cdn",
+	),
+	RunE: runCDN,
+}
+
 func init() {
-	cdnCmd.Flags().BoolVar(&opt.CDN.StripCDN, "strip-cdn", false, "Only output non-CDN IPs (remove CDN/WAF IPs from output)")
+	f := cdnCmd.Flags()
+	f.BoolVar(&opt.CDN.Exclude, "exclude", false, "Drop CDN/WAF IPs, leaving candidate origins")
+	f.BoolVar(&opt.CDN.Only, "only", false, "Keep only CDN/WAF IPs")
+
+	cdnCmd.MarkFlagsMutuallyExclusive("exclude", "only")
 	rootCmd.AddCommand(cdnCmd)
 }
 
-var cdnCmd = &cobra.Command{
-	Use:   "cdn",
-	Short: "Check if IPs belong to a CDN or WAF provider",
-	Long:  cdnLong,
-	// Example is set in helptext.go init()
-	Run: runCDN,
-}
-
-func runCDN(_ *cobra.Command, args []string) {
-	output.SetupLogger(opt.Silent, opt.Debug, opt.NoColor)
-	inputs := runner.ReadInputs(opt.Input, opt.InputFile, args)
-	if len(inputs) == 0 {
-		output.Error("No input provided")
-		return
-	}
-
-	w, err := output.NewWriter(opt.Output, opt.JSONOutput)
+func runCDN(cmd *cobra.Command, _ []string) error {
+	rc, err := setup(cmd)
 	if err != nil {
-		output.Error("%v", err)
-		return
+		return err
 	}
-	defer w.Close()
+	defer rc.Close()
 
-	cdnClient := cdncheck.New()
-	if cdnClient == nil {
-		output.Error("Failed to initialize CDN check client")
-		return
+	client := cdncheck.New()
+	if client == nil {
+		return fmt.Errorf("initialize the cdncheck client")
 	}
 
-	output.Info("Checking %d target(s) for CDN/WAF", len(inputs))
+	output.Info("Checking %d target(s) for CDN/WAF", len(rc.Inputs))
 
-	runner.RunParallel(inputs, opt.Concurrency, func(input string) {
-		ip := input
-
-		// handle http(s) URLs
-		if strings.HasPrefix(ip, "http") {
-			u, err := url.Parse(ip)
-			if err != nil {
-				output.Debug("Failed to parse URL: %s", ip)
-				return
-			}
-			ip = u.Hostname()
-		}
-
-		parsed := net.ParseIP(ip)
-		if parsed == nil {
-			output.Debug("Invalid IP: %s", ip)
+	runner.RunParallel(rc.Inputs, opt.Concurrency, func(target string) {
+		result, ok := cdn.Classify(client, target)
+		if !ok {
 			return
 		}
 
-		matched, vendor, ipType, err := cdnClient.Check(parsed)
-		if err != nil {
-			output.Debug("CDN check error for %s: %v", ip, err)
+		switch {
+		case opt.CDN.Exclude && result.IsCDN:
+			output.Verbose("Excluding %s (%s/%s)", result.IP, result.Vendor, result.Type)
+			return
+		case opt.CDN.Only && !result.IsCDN:
+			output.Verbose("Skipping %s (not behind a CDN or WAF)", result.IP)
 			return
 		}
 
-		if vendor == "" {
-			vendor = "unknown"
-		}
-		if ipType == "" {
-			ipType = "none"
-		}
-
-		isCDN := matched && (ipType == "cdn" || ipType == "waf")
-
-		if opt.CDN.StripCDN && isCDN {
-			output.Verbose("Stripping CDN/WAF IP: %s (%s/%s)", ip, vendor, ipType)
-			return
-		}
-
-		if opt.JSONOutput {
-			w.WriteJSON(cdnResult{
-				IP:     ip,
-				IsCDN:  isCDN,
-				Vendor: vendor,
-				Type:   ipType,
-			})
-		} else {
-			// Default: show IP with vendor and type (verbose is now default)
-			w.WriteString(fmt.Sprintf("%s | %s | %s", ip, vendor, ipType))
-		}
+		rc.Writer.Write(result)
 	})
-}
-
-type cdnResult struct {
-	IP     string `json:"ip"`
-	IsCDN  bool   `json:"is_cdn"`
-	Vendor string `json:"vendor"`
-	Type   string `json:"type"`
+	return nil
 }

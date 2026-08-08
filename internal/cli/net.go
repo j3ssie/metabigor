@@ -1,9 +1,7 @@
 package cli
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"sync"
 
 	"github.com/j3ssie/metabigor/internal/asndb"
 	"github.com/j3ssie/metabigor/internal/countrydb"
@@ -14,161 +12,128 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const netLong = `Discover the network ranges (CIDRs) behind an ASN, IP, domain, or organization.
+
+The target type is detected automatically; override it with --asn, --ip,
+--domain, or --org when a name is ambiguous.
+
+Lookups run against the bundled ASN database, which is fast and works offline.
+Use --live to query bgp.he.net and friends instead, which is slower but current.`
+
+var netCmd = &cobra.Command{
+	Use:         "net [target...]",
+	Short:       "Find network ranges (CIDRs) for an ASN, IP, domain, or org",
+	Long:        netLong,
+	GroupID:     groupRecon,
+	Annotations: map[string]string{"sample": "AS13335"},
+	Example: examples(
+		"find every CIDR announced by an ASN", "metabigor net AS13335",
+		"pass the target with a flag instead", "metabigor net -i AS13335 -f json",
+		"several ASNs at once", "metabigor net AS13335 AS15169",
+		"see which ASN owns an IP", "metabigor net 1.1.1.1 --detail",
+		"look up a company by name", "metabigor net --org Cloudflare",
+		"query live sources instead of the local database", "metabigor net --live tesla.com",
+		"run a batch from a file", "metabigor net -I asn-list.txt -f csv -o ranges.csv",
+		"or read the batch from stdin", "cat asn-list.txt | metabigor net",
+		"feed the ranges into an IP scan", "metabigor net AS13335 -f flat | metabigor ip",
+	),
+	RunE: runNet,
+}
+
 func init() {
-	netCmd.Flags().BoolVar(&opt.Net.ASN, "asn", false, "Force input as ASN")
-	netCmd.Flags().BoolVar(&opt.Net.Org, "org", false, "Force input as organization name")
-	netCmd.Flags().BoolVar(&opt.Net.IP, "ip", false, "Force input as IP address")
-	netCmd.Flags().BoolVar(&opt.Net.Domain, "domain", false, "Force input as domain")
-	netCmd.Flags().BoolVarP(&opt.Net.Dynamic, "dynamic", "d", false, "Use live online sources instead of local DB")
-	netCmd.Flags().BoolVar(&opt.Net.Detail, "detail", false, "Show detailed info (type, description, country)")
+	f := netCmd.Flags()
+	f.BoolVar(&opt.Net.ASN, "asn", false, "Treat the target as an ASN")
+	f.BoolVar(&opt.Net.IP, "ip", false, "Treat the target as an IP or CIDR")
+	f.BoolVar(&opt.Net.Domain, "domain", false, "Treat the target as a domain")
+	f.BoolVar(&opt.Net.Org, "org", false, "Treat the target as an organization name")
+	f.BoolVar(&opt.Net.Live, "live", false, "Query live online sources instead of the local database")
+	f.BoolVarP(&opt.Net.Detail, "detail", "d", false, "Add ASN, organization, and country columns")
+
+	netCmd.MarkFlagsMutuallyExclusive("asn", "ip", "domain", "org")
 	rootCmd.AddCommand(netCmd)
 }
 
-var netCmd = &cobra.Command{
-	Use:   "net",
-	Short: "Discover network ranges (CIDRs) for ASN, IP, domain, or organization",
-	Long:  netLong,
-	// Example is set in helptext.go init()
-	Run: runNet,
-}
-
-func runNet(_ *cobra.Command, args []string) {
-	output.SetupLogger(opt.Silent, opt.Debug, opt.NoColor)
-	inputs := runner.ReadInputs(opt.Input, opt.InputFile, args)
-	if len(inputs) == 0 {
-		output.Error("No input provided")
-		return
-	}
-
-	w, err := output.NewWriter(opt.Output, opt.JSONOutput)
+func runNet(cmd *cobra.Command, _ []string) error {
+	rc, err := setup(cmd)
 	if err != nil {
-		output.Error("%v", err)
-		return
+		return err
 	}
-	defer w.Close()
+	defer rc.Close()
 
-	// Determine forced input type
-	forceType := netdiscovery.TypeUnknown
-	switch {
-	case opt.Net.ASN:
-		forceType = netdiscovery.TypeASN
-	case opt.Net.IP:
-		forceType = netdiscovery.TypeIP
-	case opt.Net.Domain:
-		forceType = netdiscovery.TypeDomain
-	case opt.Net.Org:
-		forceType = netdiscovery.TypeOrg
+	forced := forcedNetType()
+	if forced != netdiscovery.TypeUnknown {
+		output.Verbose("Treating every target as %s", forced)
 	}
 
-	if forceType != netdiscovery.TypeUnknown {
-		output.Verbose("Input type forced to: %s", forceType)
-	}
-
-	if opt.Net.Dynamic {
-		output.Info("Using dynamic (live) sources")
+	if opt.Net.Live {
+		output.Info("Looking up %d target(s) via live sources", len(rc.Inputs))
 		client := httpclient.NewClient(opt.Timeout, opt.Retry, opt.Proxy)
 
-		// Check if detail mode is requested for domain/org lookups
-		if opt.Net.Detail && (opt.Net.Domain || opt.Net.Org || forceType == netdiscovery.TypeDomain || forceType == netdiscovery.TypeOrg) {
-			runner.RunParallel(inputs, opt.Concurrency, func(input string) {
-				results := netdiscovery.DynamicLookupDetailed(client, input, opt.Timeout)
-				for _, r := range results {
-					if opt.JSONOutput {
-						data, _ := json.Marshal(r)
-						w.WriteString(string(data))
-					} else {
-						w.WriteString(r.Detailed())
-					}
-				}
-			})
-			return
-		}
-
-		// Default behavior: backward compatible (CIDRs only)
-		runner.RunParallel(inputs, opt.Concurrency, func(input string) {
-			results := netdiscovery.DynamicLookup(client, input, opt.Timeout)
-			for _, r := range results {
-				if opt.JSONOutput {
-					data, _ := json.Marshal(map[string]string{"input": input, "cidr": r})
-					w.WriteString(string(data))
-				} else {
-					w.WriteString(r)
-				}
+		runner.RunParallel(rc.Inputs, opt.Concurrency, func(target string) {
+			for _, r := range netdiscovery.LiveLookup(client, target, forced, opt.Timeout) {
+				r.Detail = opt.Net.Detail
+				rc.Writer.Write(r)
 			}
 		})
-		return
+		return nil
 	}
 
-	// Static mode — use local ASN DB (auto-downloads on first run)
-	output.Info("Using static (local DB) mode")
+	output.Info("Looking up %d target(s) in the local ASN database", len(rc.Inputs))
 	db, err := asndb.EnsureLoaded()
 	if err != nil {
-		output.Error("%v", err)
-		return
+		return err
 	}
+	country := lazyCountryLookup()
 
-	// Load country database for enrichment
-	countryDB, err := countrydb.EnsureLoaded()
-	if err != nil {
-		output.Warn("Country database unavailable: %v (country info will be omitted)", err)
-		countryDB = nil
-	}
-
-	runner.RunParallel(inputs, opt.Concurrency, func(input string) {
-		results := netdiscovery.StaticLookup(db, input, forceType)
-		for _, r := range results {
-			// Enrich with country information if available
-			enriched := enrichWithCountry(r, countryDB)
-
-			if opt.JSONOutput {
-				data, _ := json.Marshal(map[string]string{"input": input, "result": enriched})
-				w.WriteString(string(data))
-			} else {
-				w.WriteString(enriched)
-			}
+	runner.RunParallel(rc.Inputs, opt.Concurrency, func(target string) {
+		for _, r := range netdiscovery.StaticLookup(db, target, forced, country) {
+			r.Detail = opt.Net.Detail
+			rc.Writer.Write(r)
 		}
 	})
+	return nil
 }
 
-// enrichWithCountry adds country information to CIDR results.
-func enrichWithCountry(result string, countryDB *countrydb.DB) string {
-	if countryDB == nil {
-		return result
+// forcedNetType maps the --asn/--ip/--domain/--org overrides onto an input
+// type. Cobra guarantees at most one is set.
+func forcedNetType() netdiscovery.InputType {
+	switch {
+	case opt.Net.ASN:
+		return netdiscovery.TypeASN
+	case opt.Net.IP:
+		return netdiscovery.TypeIP
+	case opt.Net.Domain:
+		return netdiscovery.TypeDomain
+	case opt.Net.Org:
+		return netdiscovery.TypeOrg
+	default:
+		return netdiscovery.TypeUnknown
 	}
+}
 
-	// Extract CIDR from result (handles formats like "1.0.0.0/24" or "AS13335 | 1.0.0.0/24 | Description")
-	parts := strings.Split(result, "|")
-	var cidr string
-
-	if strings.Contains(result, "/") {
-		for _, part := range parts {
-			part = strings.TrimSpace(part)
-			if strings.Contains(part, "/") {
-				cidr = part
-				break
+// lazyCountryLookup resolves a country code for CIDRs whose ASN record has
+// none. The country database holds two million rows, so it is loaded on first
+// use rather than on every run.
+func lazyCountryLookup() netdiscovery.CountryLookup {
+	var (
+		once sync.Once
+		db   *countrydb.DB
+	)
+	return func(cidr string) string {
+		once.Do(func() {
+			loaded, err := countrydb.EnsureLoaded()
+			if err != nil {
+				output.Warn("Country database unavailable, leaving country blank: %v", err)
+				return
 			}
+			db = loaded
+		})
+		if db == nil {
+			return ""
 		}
-		// If not found in parts, check if result itself is a CIDR
-		if cidr == "" && strings.Contains(result, "/") {
-			cidr = strings.TrimSpace(result)
+		if rec := db.LookupCIDR(cidr); rec != nil {
+			return rec.CountryCode
 		}
+		return ""
 	}
-
-	if cidr == "" {
-		return result
-	}
-
-	// Lookup country
-	countryRec := countryDB.LookupCIDR(cidr)
-	if countryRec == nil {
-		return result
-	}
-
-	// Add country info to result
-	if len(parts) > 1 {
-		// Format: AS | CIDR | Description | Country
-		return fmt.Sprintf("%s | %s (%s)", result, countryRec.CountryCode, countryRec.CountryName)
-	}
-	// Format: CIDR | Country
-	return fmt.Sprintf("%s | %s (%s)", result, countryRec.CountryCode, countryRec.CountryName)
 }

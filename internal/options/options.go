@@ -1,76 +1,99 @@
 // Package options defines configuration structures for all metabigor commands and global flags.
 package options
 
-// Options holds all global and subcommand-specific settings.
+// Options holds every global flag plus the per-command settings.
 type Options struct {
-	// Global flags
-	Input      string
-	InputFile  string
-	Output     string
+	// Input
+	Input     string
+	InputFile string
+
+	// Output
+	Output string
+	Format string
+	Append bool
+
+	// Execution
 	Concurrency int
-	Timeout    int
-	Retry      int
-	Proxy      string
-	Silent     bool
-	Debug      bool
-	JSONOutput bool
-	NoColor    bool
+	Timeout     int
+	Retry       int
+	Proxy       string
 
-	// net subcommand
-	Net NetOptions
+	// Logging
+	Quiet   bool
+	Verbose bool
+	Debug   bool
+	NoColor bool
 
-	// cert subcommand
-	Cert CertOptions
-
-	// related subcommand
+	Net     NetOptions
+	Cert    CertOptions
 	Related RelatedOptions
+	IP      IPOptions
+	Github  GithubOptions
+	CDN     CDNOptions
+	URL     URLOptions
+}
 
-	// ip subcommand
-	IP IPOptions
+// URLOptions holds configuration for the url command.
+type URLOptions struct {
+	Sources []string // any of: wayback, commoncrawl, otx, urlscan, ghostarchive, virustotal, intelx
+	NoSubs  bool     // query the exact hostname instead of *.hostname
+	Detail  bool     // add source, status, MIME, and timestamp to text output
 
-	// github subcommand
-	Github GithubOptions
+	// Result filters. Match wins over Filter when both are set, matching the
+	// upstream archive APIs, which have no way to express both at once.
+	MatchStatus  []string
+	FilterStatus []string
+	MatchMIME    []string
+	FilterMIME   []string
+	From         string   // earliest capture date, YYYY[MM[DD[hhmmss]]]
+	To           string   // latest capture date, same format
+	Keywords     string   // regex a URL must match; pushed into the CDX APIs
+	Blacklist    []string // file extensions to drop
+	NoParams     bool     // keep one URL per host+path, dropping query variants
 
-	// cdn subcommand
-	CDN CDNOptions
+	// Request budgets, for targets whose archives are too large to walk fully.
+	LimitRequests    int // per source; 0 means unlimited
+	LimitCollections int // Common Crawl index collections; 0 means all
 }
 
 // NetOptions holds configuration for the net command.
 type NetOptions struct {
-	// Input type overrides
-	ASN     bool
-	Org     bool
-	IP      bool
-	Domain  bool
-	Dynamic bool
-	Detail  bool // Show detailed BGP info (type, description, country)
+	// Input type overrides. Mutually exclusive; empty means auto-detect.
+	ASN    bool
+	Org    bool
+	IP     bool
+	Domain bool
+
+	Live   bool // query live online sources instead of the local database
+	Detail bool // add ASN, organization, and country columns to text output
 }
 
 // CertOptions holds configuration for the cert command.
 type CertOptions struct {
 	Clean    bool
 	Wildcard bool
-	Simple   bool // Output only domain names (old behavior)
+	Detail   bool // show certificate IDs, issuers, and validity per domain
 }
 
 // RelatedOptions holds configuration for the related command.
 type RelatedOptions struct {
-	Source string // crt, whois, ua, gtm, all
+	Sources []string // any of: crt, whois, analytics
 }
 
 // IPOptions holds configuration for the ip command.
 type IPOptions struct {
-	Flat bool // IP:PORT flat output
-	CSV  bool
+	All bool // keep IPs that InternetDB returned no data for
 }
 
 // GithubOptions holds configuration for the github command.
-type GithubOptions struct{
-	Page   int
-	Detail bool // show formatted code snippet per hit
+type GithubOptions struct {
+	Pages  int
+	Detail bool // render the matching code snippet for each hit
+	Subs   bool // print only subdomains extracted from the hits
 }
 
 // CDNOptions holds configuration for the cdn command.
 type CDNOptions struct {
-	StripCDN bool // only output non-CDN IPs
+	Exclude bool // drop CDN/WAF IPs, leaving candidate origins
+	Only    bool // keep only CDN/WAF IPs
 }

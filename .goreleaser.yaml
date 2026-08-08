@@ -18,7 +18,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
+      # v-prefixed to match internal/core/constants.go, so `metabigor version`
+      # reads the same whether the binary came from make, npm, or a release.
+      - -X main.version=v{{.Version}}
       - -X main.commit={{.Commit}}
       - -X main.buildDate={{.Date}}
     goos:
@@ -60,7 +62,12 @@ checksum:
   algorithm: sha256
 
 snapshot:
-  version_template: "{{ .Version }}"
+  # Snapshot builds normally take their version from the newest git tag, which
+  # drifts behind internal/core/constants.go between releases. The npm packaging
+  # flow (`make npm-build`) exports METABIGOR_VERSION from constants.go so the
+  # binaries — and the archive names build/npm/build.mjs verifies them by —
+  # carry the exact version being published.
+  version_template: "{{ if .Env.METABIGOR_VERSION }}{{ .Env.METABIGOR_VERSION }}{{ else }}{{ .Version }}{{ end }}"
 
 changelog:
   sort: asc

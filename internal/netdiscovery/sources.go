@@ -13,25 +13,11 @@ import (
 
 var cidrPattern = regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
 
-// BGPHEResult represents a parsed result from bgp.he.net search
+// BGPHEResult represents a parsed row from a bgp.he.net search.
 type BGPHEResult struct {
-	Result      string `json:"result"`      // AS number or CIDR
-	Type        string `json:"type"`        // "ASN" or "Route"
-	Description string `json:"description"` // Organization name
-	Country     string `json:"country"`     // Country from flag title
-}
-
-// String returns just the result (AS/CIDR) for backward compatibility
-func (r BGPHEResult) String() string {
-	return r.Result
-}
-
-// Detailed returns formatted output with all fields
-func (r BGPHEResult) Detailed() string {
-	if r.Country != "" && r.Country != "Unknown" {
-		return fmt.Sprintf("%s | %s | %s | %s", r.Result, r.Type, r.Description, r.Country)
-	}
-	return fmt.Sprintf("%s | %s | %s", r.Result, r.Type, r.Description)
+	Result      string // AS number or CIDR
+	Description string // Organization name
+	Country     string // Country from flag title
 }
 
 // queryASNLookup queries asnlookup.com for ASN data (JSON API, no Chrome needed).
@@ -84,17 +70,33 @@ func queryBGPHE(client *retryablehttp.Client, query string, timeoutSec int) []BG
 		}
 	}
 
-	// Parse HTML table
-	results := parseBGPHETable(body)
+	// A search result table may hold ASNs, routes, or - for a domain query -
+	// plain DNS answers. Keep only the rows that name a network.
+	results := validBGPRows(parseBGPHETable(body))
 
-	// Fallback to regex if parsing fails
+	// Fall back to scanning the raw page for CIDRs when the table held none.
 	if len(results) == 0 {
-		output.Verbose("bgp.he.net HTML parsing returned 0 results, falling back to regex")
+		output.Verbose("bgp.he.net table had no ASN or route rows, scanning the page for CIDRs")
 		results = parseBGPHERegex(body)
 	}
 
-	output.Verbose("bgp.he.net returned %d results for %q", len(results), query)
+	output.Verbose("bgp.he.net returned %d result(s) for %q", len(results), query)
 	return results
+}
+
+// validBGPRows drops rows whose first cell is neither an ASN nor a CIDR, such
+// as the row counters and DNS answers bgp.he.net mixes into its tables.
+func validBGPRows(rows []BGPHEResult) []BGPHEResult {
+	valid := make([]BGPHEResult, 0, len(rows))
+	for _, row := range rows {
+		value := strings.TrimSpace(row.Result)
+		if isNetworkValue(value) {
+			valid = append(valid, row)
+			continue
+		}
+		output.Debug("Ignoring bgp.he.net row %q: not an ASN or CIDR", value)
+	}
+	return valid
 }
 
 // parseBGPHETable parses the HTML table from bgp.he.net search results
@@ -116,7 +118,6 @@ func parseBGPHETable(htmlBody string) []BGPHEResult {
 
 		result := BGPHEResult{
 			Result:      strings.TrimSpace(tds.Eq(0).Text()),
-			Type:        strings.TrimSpace(tds.Eq(1).Text()),
 			Description: extractDescription(tds.Eq(2)),
 			Country:     extractCountry(tds.Eq(2)),
 		}
@@ -164,10 +165,7 @@ func decodeHTMLEntities(s string) string {
 func parseBGPHERegex(htmlBody string) []BGPHEResult {
 	var results []BGPHEResult
 	for _, cidr := range cidrPattern.FindAllString(htmlBody, -1) {
-		results = append(results, BGPHEResult{
-			Result: cidr,
-			Type:   "Route",
-		})
+		results = append(results, BGPHEResult{Result: cidr})
 	}
 	return results
 }

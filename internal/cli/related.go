@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"strings"
+
 	"github.com/j3ssie/metabigor/internal/httpclient"
 	"github.com/j3ssie/metabigor/internal/output"
 	"github.com/j3ssie/metabigor/internal/related"
@@ -8,82 +10,64 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const relatedLong = `Discover domains that belong to the same owner as the target.
+
+Sources:
+  crt        Certificate Transparency logs (crt.sh)
+  whois      Reverse WHOIS lookups (viewdns.info)
+  analytics  Shared Google Analytics and Tag Manager IDs (builtwith.com)
+
+All three run by default. Pass --sources to pick a subset; results are
+deduplicated across sources and tagged with the one that found them first.`
+
+var relatedCmd = &cobra.Command{
+	Use:         "related [domain...]",
+	Short:       "Find other domains owned by the same target",
+	Long:        relatedLong,
+	GroupID:     groupRecon,
+	Annotations: map[string]string{"sample": "hackerone.com"},
+	Example: examples(
+		"query every source", "metabigor related hackerone.com",
+		"pass the target with a flag instead", "metabigor related -i hackerone.com",
+		"pick one source", "metabigor related tesla.com --sources crt",
+		"combine a few sources", "metabigor related -i tesla.com --sources crt,whois",
+		"run a batch from a file", "metabigor related -I domains.txt -o related.txt",
+		"or read the batch from stdin", "cat domains.txt | metabigor related",
+		"emit bare domains for the next tool", "metabigor related tesla.com -f flat | metabigor cert",
+	),
+	RunE: runRelated,
+}
+
 func init() {
-	relatedCmd.Flags().StringVarP(&opt.Related.Source, "source", "s", "all", "Source: crt, whois, ua, gtm, all")
+	f := relatedCmd.Flags()
+	f.StringSliceVarP(&opt.Related.Sources, "sources", "s", nil,
+		"Sources to query: "+strings.Join(related.SourceNames(), ", ")+", or all (default all)")
 	rootCmd.AddCommand(relatedCmd)
 }
 
-var relatedCmd = &cobra.Command{
-	Use:   "related",
-	Short: "Find related domains via WHOIS, crt.sh, analytics, builtwith",
-	Long:  relatedLong,
-	// Example is set in helptext.go init()
-	Run: runRelated,
-}
-
-func runRelated(_ *cobra.Command, args []string) {
-	output.SetupLogger(opt.Silent, opt.Debug, opt.NoColor)
-	inputs := runner.ReadInputs(opt.Input, opt.InputFile, args)
-	if len(inputs) == 0 {
-		output.Error("No input provided")
-		return
-	}
-
-	w, err := output.NewWriter(opt.Output, opt.JSONOutput)
+func runRelated(cmd *cobra.Command, _ []string) error {
+	// Validate the sources before opening the writer so a typo fails
+	// immediately rather than once per target.
+	sources, err := related.ParseSources(opt.Related.Sources)
 	if err != nil {
-		output.Error("%v", err)
-		return
+		return err
 	}
-	defer w.Close()
 
-	src := opt.Related.Source
-	output.Info("Finding related domains for %d input(s) (source: %s)", len(inputs), src)
+	rc, err := setup(cmd)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	output.Info("Finding related domains for %d target(s) via %d source(s)", len(rc.Inputs), len(sources))
 	client := httpclient.NewClient(opt.Timeout, opt.Retry, opt.Proxy)
 
-	runner.RunParallel(inputs, opt.Concurrency, func(domain string) {
-		var results []string
-
-		switch src {
-		case "crt":
-			output.Verbose("Querying crt.sh for %s", domain)
-			results = related.CRTRelated(client, domain)
-		case "whois":
-			output.Verbose("Querying viewdns.info reverse WHOIS for %s", domain)
-			results = related.WhoisRelated(client, domain)
-		case "ua", "gtm":
-			output.Verbose("Extracting analytics IDs from %s", domain)
-			results = related.AnalyticsRelated(client, domain)
-		case "all":
-			seen := make(map[string]bool)
-			output.Verbose("Querying crt.sh for %s", domain)
-			for _, r := range related.CRTRelated(client, domain) {
-				if !seen[r] {
-					seen[r] = true
-					results = append(results, r)
-				}
-			}
-			output.Verbose("Querying viewdns.info for %s", domain)
-			for _, r := range related.WhoisRelated(client, domain) {
-				if !seen[r] {
-					seen[r] = true
-					results = append(results, r)
-				}
-			}
-			output.Verbose("Extracting analytics IDs from %s", domain)
-			for _, r := range related.AnalyticsRelated(client, domain) {
-				if !seen[r] {
-					seen[r] = true
-					results = append(results, r)
-				}
-			}
-		default:
-			output.Error("Unknown source: %s (use crt, whois, ua, gtm, or all)", src)
-			return
-		}
-
+	runner.RunParallel(rc.Inputs, opt.Concurrency, func(domain string) {
+		results := related.Find(client, domain, sources)
 		output.Verbose("Found %d related domain(s) for %s", len(results), domain)
 		for _, r := range results {
-			w.WriteString(r)
+			rc.Writer.Write(r)
 		}
 	})
+	return nil
 }

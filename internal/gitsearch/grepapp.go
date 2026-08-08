@@ -10,19 +10,22 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/j3ssie/metabigor/internal/httpclient"
 	"github.com/j3ssie/metabigor/internal/output"
 )
 
 // GrepAppHit represents a single grep.app search hit.
 type GrepAppHit struct {
-	OwnerID      string `json:"owner_id"`
-	Repo         string `json:"repo"`
-	Branch       string `json:"branch"`
-	Path         string `json:"path"`
+	OwnerID      string     `json:"owner_id"`
+	Repo         string     `json:"repo"`
+	Branch       string     `json:"branch"`
+	Path         string     `json:"path"`
 	Content      HitContent `json:"content"`
 	TotalMatches string     `json:"total_matches"`
+
+	// Detail appends the matching code snippet to the text rendering. It is a
+	// presentation switch, so it stays out of JSON and CSV output.
+	Detail bool `json:"-"`
 }
 
 // HitContent contains the code snippet from a search hit.
@@ -114,7 +117,11 @@ func stripHTMLTags(s string) string {
 // SearchAll queries grep.app API with auto-pagination until no more hits.
 // Returns all hits across all pages. Adds a delay between page requests.
 // If maxPages > 0, stops after fetching that many pages.
-func SearchAll(client *retryablehttp.Client, query string, delay time.Duration, maxPages int) []GrepAppHit {
+//
+// grep.app is behind a bot challenge that rejects plain HTTP clients, so this
+// goes through headless Chrome. On failure it returns the hits gathered so far
+// alongside the error, so a mid-pagination break still yields partial results.
+func SearchAll(session *httpclient.ChromeSession, query string, delay time.Duration, maxPages int) ([]GrepAppHit, error) {
 	var allHits []GrepAppHit
 
 	for page := 1; ; page++ {
@@ -127,16 +134,14 @@ func SearchAll(client *retryablehttp.Client, query string, delay time.Duration, 
 		u := fmt.Sprintf("https://grep.app/api/search?regexp=true&q=%s&page=%d&format=e", url.QueryEscape(query), page)
 		output.Verbose("grep.app page %d: %s", page, u)
 
-		body, err := httpclient.Get(client, u)
+		body, err := session.GetJSON(u)
 		if err != nil {
-			output.Error("grep.app page %d failed: %v", page, err)
-			break
+			return allHits, fmt.Errorf("page %d: %w", page, err)
 		}
 
 		var resp grepAppResponse
 		if err := json.Unmarshal([]byte(body), &resp); err != nil {
-			output.Debug("grep.app page %d parse error: %v", page, err)
-			break
+			return allHits, fmt.Errorf("page %d: response was not valid JSON: %w", page, err)
 		}
 
 		if len(resp.Hits.Hits) == 0 {
@@ -158,7 +163,7 @@ func SearchAll(client *retryablehttp.Client, query string, delay time.Duration, 
 	}
 
 	output.Good("grep.app: %d total hits for %q", len(allHits), query)
-	return allHits
+	return allHits, nil
 }
 
 // subdomainRe matches subdomains: one or more label.domain pattern

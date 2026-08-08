@@ -111,6 +111,25 @@ func (db *DB) LookupIP(ipStr string) *ASNRecord {
 	return nil
 }
 
+// LookupCIDR finds the ASN record covering a CIDR block, via its first address.
+func (db *DB) LookupCIDR(cidr string) *ASNRecord {
+	_, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return nil
+	}
+	return db.LookupIP(ipNet.IP.String())
+}
+
+// LookupTarget resolves either an IP or a CIDR to the record that covers it.
+// The bare-IP case skips the CIDR parse, which would otherwise allocate a
+// ParseError for every address in a large batch.
+func (db *DB) LookupTarget(target string) *ASNRecord {
+	if strings.IndexByte(target, '/') < 0 {
+		return db.LookupIP(target)
+	}
+	return db.LookupCIDR(target)
+}
+
 // LookupASN returns all records matching the given ASN number.
 func (db *DB) LookupASN(asn string) []ASNRecord {
 	asn = strings.TrimPrefix(strings.ToUpper(asn), "AS")
